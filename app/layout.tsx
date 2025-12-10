@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import { AuthProvider } from "@/contexts/AuthContext";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -12,9 +12,9 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "AI Host Chat",
-  description: "New Year Eve Party AI Host",
+export const metadata = {
+  title: "AI Host - Шинэ жилийн үйл ажиллагаа",
+  description: "New Year Eve Party Platform",
 };
 
 export default function RootLayout({
@@ -28,7 +28,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
-        {children}
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );
