@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { user, signOut } = useAuth();
+  const { user, signOut, loading: authLoading } = useAuth();
 
   const [username, setUsername] = useState("");
   const [team, setTeam] = useState("team1");
@@ -25,11 +25,11 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (user) {
-      setUsername(user.username);
-      setTeam(user.team);
-      setSex(user.sex);
-      setProfilePicUrl(user.profile_pic_url);
-      setPreview(user.profile_pic_url || null);
+      setUsername(user.username ?? "");
+      setTeam(user.team ?? "team1");
+      setSex((user.sex as "male" | "female") ?? "male");
+      setProfilePicUrl(user.profile_pic_url ?? null);
+      setPreview(user.profile_pic_url ?? null);
     }
   }, [user]);
 
@@ -39,7 +39,7 @@ export default function ProfilePage() {
     reader.onload = () => {
       const dataUrl = reader.result as string;
       setPreview(dataUrl);
-      setProfilePicUrl(dataUrl); // storing data URL directly
+      setProfilePicUrl(dataUrl);
     };
     reader.readAsDataURL(file);
   };
@@ -48,24 +48,16 @@ export default function ProfilePage() {
     if (!user) return;
     setSaving(true);
     setMessage("");
-
     const { error } = await supabase
       .from("users")
-      .update({
-        username,
-        team,
-        sex,
-        profile_pic_url: profilePicUrl,
-      })
+      .update({ username, team, sex, profile_pic_url: profilePicUrl })
       .eq("id", user.id);
 
     setSaving(false);
-
     if (error) {
       setMessage("Хадгалах үед алдаа гарлаа.");
     } else {
       setMessage("Амжилттай хадгаллаа.");
-      // Update local storage copy so UI reflects changes
       const updated = { ...user, username, team, sex, profile_pic_url: profilePicUrl };
       localStorage.setItem("user", JSON.stringify(updated));
     }
@@ -75,6 +67,14 @@ export default function ProfilePage() {
     await signOut();
     router.push("/auth/signin");
   };
+
+  if (authLoading || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-xl">Ачаалаж байна...</div>
+      </div>
+    );
+  }
 
   return (
     <ProtectedRoute>
@@ -96,19 +96,15 @@ export default function ProfilePage() {
               </div>
               <div>
                 <Label className="mb-1 block">Профайл зураг</Label>
-                <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleFile(e.target.files?.[0])}
-                />
+                <Input type="file" accept="image/*" onChange={(e) => handleFile(e.target.files?.[0])} />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="username">Nickname</Label>
+              <Label htmlFor="username">Никнэйм</Label>
               <Input
                 id="username"
-                value={username}
+                value={username ?? ""}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="Никнэйм"
               />
@@ -141,11 +137,7 @@ export default function ProfilePage() {
               </Select>
             </div>
 
-            {message && (
-              <div className="text-sm text-green-700 bg-green-100 px-3 py-2 rounded">
-                {message}
-              </div>
-            )}
+            {message && <div className="text-sm text-green-700 bg-green-100 px-3 py-2 rounded">{message}</div>}
 
             <div className="flex gap-3">
               <Button className="flex-1" onClick={handleSave} disabled={saving}>

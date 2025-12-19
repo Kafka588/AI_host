@@ -50,3 +50,17 @@ export async function synthesizeSpeech(
 
   return await resp.blob();
 }
+
+export async function queueVideo(videoPath: string): Promise<void> {
+  const resp = await fetch("/api/queue-video", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ videoPath, action: "queue" }),
+  });
+
+  const data = await resp.json();
+
+  if (!resp.ok) {
+    throw new Error(data.error || "Queue failed");
+  }
+}

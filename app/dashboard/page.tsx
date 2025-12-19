@@ -11,7 +11,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (user) {
       if (user.is_admin) {
-        router.push("/admin");
+        router.push("/dashboard/admin");
       } else {
         router.push("/user/scoreboard");
       }
@@ -20,7 +20,9 @@ export default function Dashboard() {
 
   return (
     <ProtectedRoute>
-      <div>Перенаправялав байна...</div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-xl">Redirecting...</div>
+      </div>
     </ProtectedRoute>
   );
 }
