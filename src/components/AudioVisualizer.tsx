@@ -28,22 +28,9 @@ export function AudioVisualizer({ analyser }: Props) {
       ctx.fillStyle = "#1E1E1E";
       ctx.fillRect(0, 0, width, height);
 
+      const barWidth = width / barCount;
+
       if (!analyser) {
-        // Ambient aesthetic when no audio is connected
-        const t = performance.now() * 0.002;
-        const barWidth = width / barCount;
-        for (let i = 0; i < barCount; i++) {
-          const wave = Math.sin(t + i * 0.25) * 0.5 + 0.5;
-          const barHeight = wave * height * 0.6 + height * 0.1;
-          const x = i * barWidth;
-          const y = height - barHeight;
-          const gradient = ctx.createLinearGradient(0, height, 0, 0);
-          gradient.addColorStop(0, "#FFD700");
-          gradient.addColorStop(0.5, "#ddb900");
-          gradient.addColorStop(1, "#c49216");
-          ctx.fillStyle = gradient;
-          ctx.fillRect(x + gap / 2, y, barWidth - gap, barHeight);
-        }
         return;
       }
 
@@ -52,7 +39,6 @@ export function AudioVisualizer({ analyser }: Props) {
       analyser.getByteFrequencyData(dataArray);
 
       const binsPerBar = Math.max(1, Math.floor(bufferLength / barCount));
-      const barWidth = width / barCount;
 
       for (let i = 0; i < barCount; i++) {
         let sum = 0;
@@ -62,6 +48,7 @@ export function AudioVisualizer({ analyser }: Props) {
         const avg = sum / binsPerBar;
         const normalized = avg / 255;
         const barHeight = normalized * height * 0.85 + height * 0.05;
+
         const x = i * barWidth;
         const y = height - barHeight;
         const gradient = ctx.createLinearGradient(0, height, 0, 0);
