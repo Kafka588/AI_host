@@ -48,10 +48,10 @@ export default function SignUp() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 to-indigo-900 p-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-[#0F1626] p-4">
+      <Card className="w-full max-w-md bg-[#363C4E] border-none">
         <CardHeader>
-          <CardTitle className="text-center text-2xl">Бүртгүүлэх</CardTitle>
+          <CardTitle className="text-center font-bold text-2xl text-[#FFD700]">Бүртгүүлэх</CardTitle>
         </CardHeader>
         <CardContent>
           {error && (
@@ -60,7 +60,7 @@ export default function SignUp() {
             </div>
           )}
           <form className="space-y-4" onSubmit={handleSubmit}>
-            <div className="space-y-2">
+            <div className="space-y-2 text-white">
               <Label htmlFor="username">Хэрэглэгчийн нэр</Label>
               <Input
                 id="username"
@@ -71,7 +71,7 @@ export default function SignUp() {
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 text-white">
               <Label>Хүйс</Label>
               <Select
                 value={formData.sex}
@@ -85,7 +85,7 @@ export default function SignUp() {
               </Select>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 text-white">
               <Label>Баг</Label>
               <Select
                 value={formData.team}
@@ -100,7 +100,7 @@ export default function SignUp() {
               </Select>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 text-white">
               <Label htmlFor="password">Нууц үг</Label>
               <Input
                 id="password"
@@ -112,7 +112,7 @@ export default function SignUp() {
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 text-white">
               <Label htmlFor="confirmPassword">Нууц үг баталгаажуул</Label>
               <Input
                 id="confirmPassword"
@@ -124,12 +124,12 @@ export default function SignUp() {
               />
             </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full bg-[#FFD700] text-white font-bold h-12" disabled={loading}>
               {loading ? "Бүртгэж байна..." : "Бүртгүүлэх"}
             </Button>
             <p className="text-center text-sm text-muted-foreground">
               Аль хэдийн бүртгүүлсэн үү?{" "}
-              <a className="text-purple-600 hover:underline" href="/auth/signin">
+              <a className="text-[#FFD700] hover:underline" href="/auth/signin">
                 Нэвтрэх
               </a>
             </p>

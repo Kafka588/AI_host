@@ -78,39 +78,40 @@ export default function ProfilePage() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 to-indigo-900 p-4">
-        <Card className="w-full max-w-xl">
+      <div className="min-h-screen flex items-center justify-center bg-[#1E1E1E] p-4 text-white">
+        <Card className="w-full max-w-xl bg-[#454545] border-none">
           <CardHeader>
-            <CardTitle className="text-2xl">Профайл</CardTitle>
+            <CardTitle className="text-2xl text-white">Профайл</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="flex items-center gap-4">
-              <div className="h-20 w-20 rounded-full bg-gray-200 overflow-hidden">
+              <div className="w-20 h-20 rounded-2xl bg-gray-200 overflow-hidden">
                 {preview ? (
                   <img src={preview} alt="profile" className="h-full w-full object-cover" />
                 ) : (
-                  <div className="h-full w-full flex items-center justify-center text-sm text-gray-500">
+                  <div className="h-full w-full flex items-center justify-center text-sm text-white">
                     No image
                   </div>
                 )}
               </div>
               <div>
-                <Label className="mb-1 block">Профайл зураг</Label>
+                <Label className="mb-1 block text-white">Профайл зураг</Label>
                 <Input type="file" accept="image/*" onChange={(e) => handleFile(e.target.files?.[0])} />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="username">Никнэйм</Label>
+            <div className="space-y-2 text-white">
+              <Label htmlFor="username">Нэр</Label>
               <Input
                 id="username"
                 value={username ?? ""}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="Никнэйм"
+                placeholder="Нэрээ оруулна уу"
+                className="border-none bg-[#2d2d2d]"
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 text-white border-none">
               <Label>Хүйс</Label>
               <Select value={sex} onValueChange={(v) => setSex(v as "male" | "female")}>
                 <SelectTrigger>
@@ -123,7 +124,7 @@ export default function ProfilePage() {
               </Select>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 text-white border-none">
               <Label>Баг</Label>
               <Select value={team} onValueChange={(v) => setTeam(v)}>
                 <SelectTrigger>
@@ -140,10 +141,10 @@ export default function ProfilePage() {
             {message && <div className="text-sm text-green-700 bg-green-100 px-3 py-2 rounded">{message}</div>}
 
             <div className="flex gap-3">
-              <Button className="flex-1" onClick={handleSave} disabled={saving}>
+              <Button className="flex-1 bg-[#FFD700] text-[#917800] font-bold" onClick={handleSave} disabled={saving}>
                 {saving ? "Хадгалж байна..." : "Хадгалах"}
               </Button>
-              <Button variant="secondary" onClick={handleLogout}>
+              <Button variant="secondary" onClick={handleLogout} className="font-bold bg-red-400">
                 Гарах
               </Button>
             </div>

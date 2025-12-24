@@ -8,15 +8,25 @@ type Props = {
   stayMs?: number;
   className?: string;
   pollQueueMs?: number;
+  muted?: boolean;
+  onActiveChange?: (el: HTMLVideoElement) => void;
 };
 
-export function VideoLooper({ sources, crossfadeMs = 600, stayMs, className, pollQueueMs = 1000 }: Props) {
+export function VideoLooper({ sources, crossfadeMs = 600, stayMs, className, pollQueueMs = 1000, muted = false, onActiveChange }: Props) {
   const v1Ref = useRef<HTMLVideoElement | null>(null);
   const v2Ref = useRef<HTMLVideoElement | null>(null);
   const [active, setActive] = useState<1 | 2>(1);
   const [index, setIndex] = useState(0);
   const playbackQueueRef = useRef<{ path: string; muted?: boolean }[]>([]);
   const activeRef = useRef<1 | 2>(1);
+  const mutedRef = useRef<boolean>(muted);
+  const onActiveChangeRef = useRef<typeof onActiveChange>(onActiveChange);
+
+  // Keep refs in sync without changing effect dependencies
+  useEffect(() => {
+    mutedRef.current = muted;
+    onActiveChangeRef.current = onActiveChange;
+  });
 
   // Load a source into a video element; optionally defer playback for preloading
   const loadInto = async (
@@ -33,7 +43,13 @@ export function VideoLooper({ sources, crossfadeMs = 600, stayMs, className, pol
       el.onloadeddata = () => {
         el.currentTime = 0;
         if (autoPlay) {
-          el.play().catch(() => {});
+          el.play().catch(async () => {
+            // If autoplay with audio is blocked, fallback to muted
+            try {
+              el.muted = true;
+              await el.play();
+            } catch {}
+          });
         } else {
           el.pause();
         }
@@ -91,9 +107,14 @@ export function VideoLooper({ sources, crossfadeMs = 600, stayMs, className, pol
       await loadInto(
         activeRef.current === 1 ? v1 : v2,
         currentSources[i % currentSources.length],
-        true,
+        mutedRef.current,
         true
       );
+
+      // Notify initial active element
+      if (onActiveChangeRef.current) {
+        onActiveChangeRef.current(activeRef.current === 1 ? v1 : v2);
+      }
 
       while (!cancelled) {
         const currentEl = activeRef.current === 1 ? v1 : v2;
@@ -106,12 +127,14 @@ export function VideoLooper({ sources, crossfadeMs = 600, stayMs, className, pol
         if (playbackQueueRef.current && playbackQueueRef.current.length > 0) {
           const queuedItem = playbackQueueRef.current.shift()!;
           nextSrc = queuedItem.path;
-          shouldMute = queuedItem.muted ?? true;
+          // Respect explicit mute flag from queue, otherwise fall back to component prop
+          shouldMute = queuedItem.muted ?? mutedRef.current;
           nextIndex = -1;
         } else {
           nextIndex = (i + 1) % currentSources.length;
           nextSrc = currentSources[nextIndex];
-          shouldMute = true;
+          // Default to component-level mute preference for carousel clips
+          shouldMute = mutedRef.current;
         }
 
         // Preload next clip but start playing only when we switch to it
@@ -123,7 +146,18 @@ export function VideoLooper({ sources, crossfadeMs = 600, stayMs, className, pol
             ? currentEl.duration * 1000
             : 5000);
 
-        await new Promise<void>((res) => setTimeout(res, clipMs));
+        // Allow immediate interruption if a queued item arrives
+        const waitForFinishOrQueue = async (ms: number) => {
+          const start = performance.now();
+          while (performance.now() - start < ms) {
+            if (playbackQueueRef.current && playbackQueueRef.current.length > 0) {
+              break;
+            }
+            await new Promise<void>((r) => setTimeout(r, 150));
+          }
+        };
+
+        await waitForFinishOrQueue(clipMs);
 
         // If a new queue item arrived during this clip, override the preloaded next
         if (playbackQueueRef.current && playbackQueueRef.current.length > 0) {
@@ -139,7 +173,8 @@ export function VideoLooper({ sources, crossfadeMs = 600, stayMs, className, pol
           try {
             await nextEl.play();
           } catch (err) {
-            // If autoplay is blocked (likely due to audio), try once more muted
+            // If autoplay with audio is blocked, always fallback to muted
+            // to ensure frames advance. UI may later unmute via user gesture.
             try {
               nextEl.muted = true;
               await nextEl.play();
@@ -153,6 +188,11 @@ export function VideoLooper({ sources, crossfadeMs = 600, stayMs, className, pol
         crossfade(currentEl, nextEl);
         activeRef.current = activeRef.current === 1 ? 2 : 1;
         setActive(activeRef.current);
+
+        // Notify active element change for audio visualization coupling
+        if (onActiveChangeRef.current) {
+          onActiveChangeRef.current(activeRef.current === 1 ? v1 : v2);
+        }
         i = nextIndex === -1 ? i : nextIndex;
       }
     };

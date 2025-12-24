@@ -28,10 +28,10 @@ export default function SignIn() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 to-indigo-900 p-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-[#0F1626] p-4">
+      <Card className="w-full max-w-md bg-[#363C4E] border-none">
         <CardHeader>
-          <CardTitle className="text-center text-2xl">Нэвтрэх</CardTitle>
+          <CardTitle className="text-center font-bold text-2xl text-[#FFD700]">Нэвтрэх</CardTitle>
         </CardHeader>
         <CardContent>
           {error && (
@@ -40,7 +40,7 @@ export default function SignIn() {
             </div>
           )}
           <form className="space-y-4" onSubmit={handleSubmit}>
-            <div className="space-y-2">
+            <div className="space-y-2 text-white">
               <Label htmlFor="username">Хэрэглэгчийн нэр</Label>
               <Input
                 id="username"
@@ -51,7 +51,7 @@ export default function SignIn() {
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 text-white">
               <Label htmlFor="password">Нууц үг</Label>
               <Input
                 id="password"
@@ -63,12 +63,12 @@ export default function SignIn() {
               />
             </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full bg-[#FFD700] text-white font-bold h-12" disabled={loading}>
               {loading ? "Нэвтэрч байна..." : "Нэвтрэх"}
             </Button>
             <p className="text-center text-sm text-muted-foreground">
               Шинэ хэрэглэгч үү?{" "}
-              <a className="text-purple-600 hover:underline" href="/auth/signup">
+              <a className="text-[#FFD700] hover:underline" href="/auth/signup">
                 Бүртгүүлэх
               </a>
             </p>

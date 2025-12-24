@@ -34,14 +34,30 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 to-indigo-900 p-4">
-      <Card className="w-full max-w-2xl h-[80vh] flex flex-col">
-        <CardHeader className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-t-lg">
-          <CardTitle className="text-lg">🎉 AI Host</CardTitle>
-          <p className="text-sm text-white/80">Бичих эсвэл 🎤 дарж ярь.</p>
-        </CardHeader>
-        <CardContent className="flex-1 flex flex-col p-0">
-          <ChatContainer messages={messages} loading={loading} />
+    <div className="fixed inset-0 flex flex-col bg-gradient-to-b from-[#1a1a1a] to-[#2d2d2d] overflow-hidden">
+      {/* Header */}
+      <div className="flex-shrink-0 border-b border-white/10 bg-[#1a1a1a]/80 backdrop-blur">
+        <div className="max-w-3xl mx-auto px-4 py-3">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold">
+              AI
+            </div>
+            <div>
+              <h1 className="text-white font-semibold">Номун</h1>
+              <p className="text-xs text-gray-400">Хиймэл Оюун ухаант туслах</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Chat Container */}
+      <div className="flex-1 overflow-hidden">
+        <ChatContainer messages={messages} loading={loading} />
+      </div>
+
+      {/* Input Area - with space for bottom nav */}
+      <div className="flex-shrink-0 border-t border-white/10 bg-[#2d2d2d] backdrop-blur mb-20">
+        <div className="max-w-3xl mx-auto px-4 py-3">
           <ChatInput
             onSend={sendTextMessage}
             onRecord={handleRecord}
@@ -49,8 +65,8 @@ export default function Home() {
             recording={recording}
             disabled={loading || speaking}
           />
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

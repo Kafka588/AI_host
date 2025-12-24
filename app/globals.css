@@ -36,6 +36,18 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* Custom theme tokens from request */
+  --primary-100: #FFD700;
+  --primary-200: #ddb900;
+  --primary-300: #917800;
+  --accent-100: #c49216;
+  --accent-200: #5e3b00;
+  --text-100: #dcdcdc;
+  --text-200: #929292;
+  --bg-100: #1E1E1E;
+  --bg-200: #2d2d2d;
+  --bg-300: #454545;
 }
 
 @theme inline {
