@@ -61,7 +61,7 @@ function Board({
                   <div className="text-[#dcdcdc]">{item.name}</div>
                 </div>
               </div>
-              <div className="text-xl font-bold text-[#FFD700]">{item.score}</div>
+              {/* <div className="text-xl font-bold text-[#FFD700]">{item.score}</div> */}
             </div>
           ))
         )}
@@ -112,7 +112,7 @@ function VotingBoard({
                 </div>
                 <div>
                   <div className="text-[#dcdcdc] font-medium">{nominee.name}</div>
-                  <div className="text-sm text-[#929292]">{nominee.voteCount} votes</div>
+                  {/* <div className="text-sm text-[#929292]">{nominee.voteCount} votes</div> */}
                 </div>
               </div>
               {i === 0 && (
@@ -154,7 +154,7 @@ export default function ScoreboardPage() {
               id: n.id,
               name: n.name,
               photo_url: n.photo_url,
-              voteCount: n.voteCount,
+              // voteCount: n.voteCount,
             }));
           
           const princeList = nominees
@@ -164,7 +164,7 @@ export default function ScoreboardPage() {
               id: n.id,
               name: n.name,
               photo_url: n.photo_url,
-              voteCount: n.voteCount,
+              // voteCount: n.voteCount,
             }));
           
           const sweaterList = nominees
@@ -174,7 +174,7 @@ export default function ScoreboardPage() {
               id: n.id,
               name: n.name,
               photo_url: n.photo_url,
-              voteCount: n.voteCount,
+              // voteCount: n.voteCount,
             }));
           
           setPrincessNominees(princessList);
@@ -194,16 +194,16 @@ export default function ScoreboardPage() {
             const allUsers = [...(leaderboardData.princess || []), ...(leaderboardData.prince || [])];
             const currentUserData = allUsers.find((u: any) => u.name === user.username);
             if (currentUserData) {
-              setUserScore(currentUserData.score);
+              // setUserScore(currentUserData.score);
             }
 
             // Find team score
             const userTeam = leaderboardData.teams?.find(
               (t: any) => t.name === user.team
             );
-            if (userTeam) {
-              setTeamScore(userTeam.score);
-            }
+            // if (userTeam) {
+            //   setTeamScore(userTeam.score);
+            // }
           }
         }
       } catch (err) {

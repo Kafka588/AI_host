@@ -162,7 +162,8 @@ export default function VotePage() {
                 <option value="">Select a princess...</option>
                 {femaleUsers.map((u) => (
                   <option key={u.id} value={u.id}>
-                    {u.name} ({u.voteCount} votes)
+                    {u.name} 
+                    {/* ({u.voteCount} votes) */}
                   </option>
                 ))}
               </select>
@@ -208,7 +209,8 @@ export default function VotePage() {
                 <option value="">Select a prince...</option>
                 {maleUsers.map((u) => (
                   <option key={u.id} value={u.id}>
-                    {u.name} ({u.voteCount} votes)
+                    {u.name} 
+                    {/* ({u.voteCount} votes) */}
                   </option>
                 ))}
               </select>
@@ -254,7 +256,8 @@ export default function VotePage() {
                 <option value="">Select the best ugly sweater...</option>
                 {allUsers.map((u) => (
                   <option key={u.id} value={u.id}>
-                    {u.name} ({u.voteCount} votes)
+                    {u.name}
+                     {/* ({u.voteCount} votes) */}
                   </option>
                 ))}
               </select>

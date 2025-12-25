@@ -22,9 +22,11 @@ type Team = {
 function Board({
 	title,
 	items,
+	showScore
 }: {
 	title: string;
 	items: { name: string; score: number }[];
+	showScore: boolean;
 }) {
 	return (
 		<Card className="w-full bg-[#454545] border-none">
@@ -35,24 +37,34 @@ function Board({
 						<TableRow className="text-[#929292]">
 							<TableHead className="w-[80px] text-base">№</TableHead>
 							<TableHead className="text-base">Name</TableHead>
+							{showScore && (
 							<TableHead className="text-right text-base">Score</TableHead>
+							)}
+
 						</TableRow>
 					</TableHeader>
 					<TableBody>
 						{items.map((item, i) => (
 							<TableRow key={item.name}>
-								<TableCell>
-									<Badge variant="secondary" className="justify-center w-12 text-sm">
-										{i + 1}
-									</Badge>
-								</TableCell>
-								<TableCell className="truncate text-white text-lg">{item.name}</TableCell>
+							<TableCell>
+								<Badge variant="secondary" className="justify-center w-12 text-sm">
+								{i + 1}
+								</Badge>
+							</TableCell>
+
+							<TableCell className="truncate text-white text-lg">
+								{item.name}
+							</TableCell>
+
+							{showScore && (
 								<TableCell className="text-right font-semibold text-[#FFD700] text-lg">
-									{item.score}
+								{item.score}
 								</TableCell>
+							)}
 							</TableRow>
 						))}
-					</TableBody>
+						</TableBody>
+
 				</Table>
 			</CardContent>
 		</Card>
@@ -82,6 +94,8 @@ export default function AdminPage() {
 	const audioContextRef = useRef<AudioContext | null>(null);
 	const v1AnalyserRef = useRef<AnalyserNode | null>(null);
 	const v2AnalyserRef = useRef<AnalyserNode | null>(null);
+	const [showScore, setShowScore] = useState(true);
+
 
 	// Set up persistent Web Audio connections for both video elements
 	useEffect(() => {
@@ -280,11 +294,20 @@ export default function AdminPage() {
 
 					{/* Right: Scoreboards - 2x2 Grid on 4K */}
 					<div className="h-full overflow-y-auto space-y-3">
-						<div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
-							<Board title="👑 Үдшийн ханхүү" items={princess} />
-							<Board title="🤴 Үдшийн гүнж" items={prince} />
-							<Board title="🧶 Хамгийн сайхан свитер" items={sweater} />
-							<Board title="📝 Leaderboard" items={teams} />
+					 {/* TOGGLE */}
+						<div className="flex justify-end">
+						<button
+							onClick={() => setShowScore(!showScore)}
+							className="px-4 py-2 rounded bg-[#FFD700] text-black font-semibold"
+						>
+							{showScore ? "⚔️" : "👁️"}
+						</button>
+						</div>
+									<div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
+							<Board title="👑 Үдшийн ханхүү" items={princess} showScore={showScore} />
+							<Board title="🤴 Үдшийн гүнж" items={prince} showScore={showScore} />
+							<Board title="🧶 Хамгийн сайхан свитер" items={sweater} showScore={showScore} />
+							<Board title="📝 Leaderboard" items={teams} showScore={showScore} />
 						</div>
 						
 						{/* Audio Visualizer (reacts to active avatar video) */}
