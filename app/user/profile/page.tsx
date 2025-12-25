@@ -16,18 +16,44 @@ export default function ProfilePage() {
   const { user, signOut, loading: authLoading, updateUser } = useAuth();
 
   const [username, setUsername] = useState("");
-  const [team, setTeam] = useState("team1");
+  const [team, setTeam] = useState("");
   const [sex, setSex] = useState<"male" | "female">("male");
   const [profilePicUrl, setProfilePicUrl] = useState<string | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState("");
+  const [teams, setTeams] = useState<{ id: string; name: string }[]>([]);
+  const [teamsLoading, setTeamsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadTeams = async () => {
+      try {
+        const res = await fetch("/api/teams");
+        const data = await res.json();
+        if (res.ok && Array.isArray(data.teams)) {
+          setTeams(data.teams);
+          if (!team && data.teams.length > 0) {
+            setTeam(data.teams[0].id);
+          }
+        } else {
+          setMessage(data.error || "Багийн жагсаалт татаж чадсангүй.");
+        }
+      } catch (e: any) {
+        setMessage(e?.message || "Багийн жагсаалт татаж чадсангүй.");
+      } finally {
+        setTeamsLoading(false);
+      }
+    };
+
+    loadTeams();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (user) {
       setUsername(user.username ?? "");
-      setTeam(user.team ?? "team1");
+      setTeam(user.team ?? "");
       setSex((user.sex as "male" | "female") ?? "male");
       setProfilePicUrl(user.profile_pic_url ?? null);
       setPreview(user.profile_pic_url ?? null);
@@ -169,14 +195,20 @@ export default function ProfilePage() {
 
             <div className="space-y-2 text-white border-none">
               <Label>Баг</Label>
-              <Select value={team} onValueChange={(v) => setTeam(v)}>
+              <Select
+                value={team}
+                onValueChange={(v) => setTeam(v)}
+                disabled={teamsLoading || teams.length === 0}
+              >
                 <SelectTrigger>
-                  <SelectValue placeholder="Баг сонгох" />
+                  <SelectValue placeholder={teamsLoading ? "Баг татаж байна..." : "Баг сонгох"} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="team1">Баг 1</SelectItem>
-                  <SelectItem value="team2">Баг 2</SelectItem>
-                  <SelectItem value="team3">Баг 3</SelectItem>
+                  {teams.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

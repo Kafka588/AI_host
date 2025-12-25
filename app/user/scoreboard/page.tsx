@@ -11,6 +11,7 @@ type LeaderboardUser = {
 };
 
 type LeaderboardTeam = {
+  id: string;
   name: string;
   score: number;
 };
@@ -135,6 +136,7 @@ export default function ScoreboardPage() {
   const [loading, setLoading] = useState(true);
   const [userScore, setUserScore] = useState(0);
   const [teamScore, setTeamScore] = useState(0);
+  const [teamName, setTeamName] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -199,10 +201,13 @@ export default function ScoreboardPage() {
 
             // Find team score
             const userTeam = leaderboardData.teams?.find(
-              (t: any) => t.name === user.team
+              (t: any) => t.id === user.team
             );
             if (userTeam) {
               setTeamScore(userTeam.score);
+              setTeamName(userTeam.name);
+            } else {
+              setTeamName(null);
             }
           }
         }
@@ -249,7 +254,7 @@ export default function ScoreboardPage() {
             <div className="text-center">
               <div className="text-sm text-[#c49216] mb-1">Team Score</div>
               <div className="text-3xl font-bold text-[#5e3b00]">{teamScore}</div>
-              <div className="text-xs text-[#917800] mt-1">{user?.team || "No Team"}</div>
+              <div className="text-xs text-[#917800] mt-1">{teamName || user?.team || "No Team"}</div>
             </div>
           </CardContent>
         </Card>

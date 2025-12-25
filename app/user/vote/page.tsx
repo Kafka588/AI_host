@@ -12,6 +12,7 @@ type User = {
   sex: string;
   photo_url?: string;
   voteCount: number;
+  category?: string;
 };
 
 type UserVote = {
@@ -87,9 +88,13 @@ export default function VotePage() {
     }
   };
 
-  const femaleUsers = users.filter((u) => u.sex?.toLowerCase() === "female" && u.id !== user?.id);
-  const maleUsers = users.filter((u) => u.sex?.toLowerCase() === "male" && u.id !== user?.id);
-  const allUsers = users.filter((u) => u.id !== user?.id);
+  const femaleUsers = users.filter(
+    (u) => u.sex?.toLowerCase() === "female" && u.category === "princess" && u.id !== user?.id
+  );
+  const maleUsers = users.filter(
+    (u) => u.sex?.toLowerCase() === "male" && u.category === "prince" && u.id !== user?.id
+  );
+  const allUsers = users.filter((u) => u.category === "ugly_sweater" && u.id !== user?.id);
 
   const hasVotedPrincess = userVotes.some((v) => v.category === "princess");
   const hasVotedPrince = userVotes.some((v) => v.category === "prince");
@@ -162,7 +167,8 @@ export default function VotePage() {
                 <option value="">Select a princess...</option>
                 {femaleUsers.map((u) => (
                   <option key={u.id} value={u.id}>
-                    {u.name} ({u.voteCount} votes)
+                    {u.name} 
+                    {/* ({u.voteCount} votes) */}
                   </option>
                 ))}
               </select>
@@ -208,7 +214,8 @@ export default function VotePage() {
                 <option value="">Select a prince...</option>
                 {maleUsers.map((u) => (
                   <option key={u.id} value={u.id}>
-                    {u.name} ({u.voteCount} votes)
+                    {u.name} 
+                    {/* ({u.voteCount} votes) */}
                   </option>
                 ))}
               </select>
@@ -254,7 +261,8 @@ export default function VotePage() {
                 <option value="">Select the best ugly sweater...</option>
                 {allUsers.map((u) => (
                   <option key={u.id} value={u.id}>
-                    {u.name} ({u.voteCount} votes)
+                    {u.name} 
+                    {/* ({u.voteCount} votes) */}
                   </option>
                 ))}
               </select>
@@ -273,12 +281,12 @@ export default function VotePage() {
           </CardContent>
         </Card>
 
-        {/* Info */}
+        {/* Info
         <div style={{ background: "var(--bg-200)", borderColor: "var(--bg-300)", borderWidth: 1 }} className="rounded-lg p-4">
           <p style={{ color: "var(--text-200)" }} className="text-sm text-center">
             👸 Princess: {femaleUsers.length} candidates | 🤴 Prince: {maleUsers.length} candidates | 🧶 Ugly Sweater: {allUsers.length} candidates
           </p>
-        </div>
+        </div> */}
       </div>
     </div>
   );

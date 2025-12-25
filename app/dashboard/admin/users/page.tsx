@@ -17,20 +17,48 @@ type User = {
   profile_pic_url?: string | null;
 };
 
+type UserScore = {
+  id: string;
+  username: string;
+  team: string;
+  score: number;
+};
+
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
+  const [userScores, setUserScores] = useState<Map<string, number>>(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [scoreDialogOpen, setScoreDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [editForm, setEditForm] = useState({ username: "", sex: "", team: "" });
+  const [scoreForm, setScoreForm] = useState({ amount: 0, reason: "" });
   const [updating, setUpdating] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     fetchUsers();
+    fetchLeaderboard();
   }, []);
+
+  const fetchLeaderboard = async () => {
+    try {
+      const response = await fetch("/api/leaderboard");
+      const data = await response.json();
+      if (response.ok) {
+        const allUsers = [...(data.princess || []), ...(data.prince || [])];
+        const scoreMap = new Map();
+        allUsers.forEach((u: any) => {
+          scoreMap.set(u.id, u.score);
+        });
+        setUserScores(scoreMap);
+      }
+    } catch (err) {
+      console.error("Failed to fetch leaderboard", err);
+    }
+  };
 
   const fetchUsers = async () => {
     try {
@@ -110,7 +138,47 @@ export default function UsersPage() {
     } finally {
       setDeleting(false);
     }
-  };;
+  }
+
+  const handleAddUserScore = async () => {
+    if (!selectedUser || !scoreForm.amount || !scoreForm.reason.trim()) {
+      setError("Please fill in all fields");
+      return;
+    }
+    setUpdating(true);
+    try {
+      const response = await fetch("/api/scores", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "add-user-score",
+          user_id: selectedUser.id,
+          amount: parseInt(scoreForm.amount as any),
+          reason: scoreForm.reason,
+        }),
+      });
+      if (response.ok) {
+        setScoreDialogOpen(false);
+        setScoreForm({ amount: 0, reason: "" });
+        setError("");
+        fetchLeaderboard();
+      } else {
+        const data = await response.json();
+        setError(data.error || "Failed to add score");
+      }
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setUpdating(false);
+    }
+  }
+
+  const handleScoreClick = (user: User) => {
+    setSelectedUser(user);
+    setScoreForm({ amount: 0, reason: "" });
+    setError("");
+    setScoreDialogOpen(true);
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -118,6 +186,8 @@ export default function UsersPage() {
         <h1 className="text-3xl font-bold text-white mb-2">User Management</h1>
         <p className="text-gray-400">View, edit, and manage all registered users</p>
       </div>
+
+      {error && <div className="bg-red-500/20 border border-red-500 text-red-300 p-4 rounded">{error}</div>}
 
       <Card className="bg-slate-800 border-slate-700">
         <CardHeader>
@@ -137,6 +207,7 @@ export default function UsersPage() {
                   <TableHead className="text-gray-300">Username</TableHead>
                   <TableHead className="text-gray-300">Sex</TableHead>
                   <TableHead className="text-gray-300">Team</TableHead>
+                  <TableHead className="text-gray-300">Score</TableHead>
                   <TableHead className="text-right text-gray-300">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -161,7 +232,16 @@ export default function UsersPage() {
                       {user.sex === "male" ? "🙎‍♂️ Male" : "🙎‍♀️ Female"}
                     </TableCell>
                     <TableCell className="text-gray-300">{user.team || "No Team"}</TableCell>
+                    <TableCell className="text-yellow-400 font-semibold">{userScores.get(user.id) || 0}</TableCell>
                     <TableCell className="text-right space-x-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleScoreClick(user)}
+                        className="text-yellow-400 border-yellow-400 hover:bg-yellow-400/10"
+                      >
+                        Score
+                      </Button>
                       <Button
                         size="sm"
                         variant="outline"
@@ -267,6 +347,54 @@ export default function UsersPage() {
                   onClick={() => setDeleteDialogOpen(false)}
                   variant="outline"
                 >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Score Dialog */}
+      <Dialog open={scoreDialogOpen} onOpenChange={setScoreDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Score to {selectedUser?.username}</DialogTitle>
+          </DialogHeader>
+          {selectedUser && (
+            <div className="space-y-4">
+              <div>
+                <Label>Score Amount</Label>
+                <Input
+                  type="number"
+                  value={scoreForm.amount}
+                  onChange={(e) => setScoreForm({ ...scoreForm, amount: parseInt(e.target.value) || 0 })}
+                  className="bg-slate-700 border-slate-600 text-white"
+                  placeholder="Enter points to add (or negative to subtract)"
+                />
+              </div>
+              <div>
+                <Label>Reason</Label>
+                <Input
+                  value={scoreForm.reason}
+                  onChange={(e) => setScoreForm({ ...scoreForm, reason: e.target.value })}
+                  className="bg-slate-700 border-slate-600 text-white"
+                  placeholder="Why are you adding/removing this score?"
+                />
+              </div>
+              <div className="bg-slate-700/50 p-3 rounded text-sm">
+                <p className="text-gray-300">Current score: <strong className="text-yellow-400">{userScores.get(selectedUser.id) || 0}</strong></p>
+                <p className="text-gray-400 mt-1">New score: <strong className="text-green-400">{(userScores.get(selectedUser.id) || 0) + scoreForm.amount}</strong></p>
+              </div>
+              <div className="flex gap-2 pt-4">
+                <Button
+                  onClick={handleAddUserScore}
+                  disabled={updating}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  {updating ? "Adding..." : "Add Score"}
+                </Button>
+                <Button onClick={() => setScoreDialogOpen(false)} variant="outline">
                   Cancel
                 </Button>
               </div>
