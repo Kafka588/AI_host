@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { TaskList } from "@/components/TaskList";
 import { QRScanner } from "@/components/QRScanner";
 import { TaskSubmitDialog } from "@/components/TaskSubmitDialog";
@@ -13,6 +15,7 @@ type ScannedTask = {
   title: string;
   explanation: string;
   image_url: string | null;
+  is_public?: boolean;
 };
 
 export default function TasksPage() {
@@ -23,6 +26,10 @@ export default function TasksPage() {
   const [scannedTasks, setScannedTasks] = useState<ScannedTask[]>([]);
   const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<ScannedTask | null>(null);
+  const [publicTasks, setPublicTasks] = useState<ScannedTask[]>([]);
+  const [userSubmissions, setUserSubmissions] = useState<any[]>([]);
+  const [mediaViewOpen, setMediaViewOpen] = useState(false);
+  const [selectedMedia, setSelectedMedia] = useState<string>("");
 
   useEffect(() => {
     fetchScannedTasks();
@@ -42,6 +49,7 @@ export default function TasksPage() {
           // Fetch user submissions to filter out already completed tasks
           const submissionsResponse = await fetch(`/api/submissions?userId=${user.id}`);
           const submissionsData = await submissionsResponse.json();
+          setUserSubmissions(submissionsData.submissions || []);
           const approvedTaskIds = (submissionsData.submissions || [])
             .filter((s: any) => s.status === "approved")
             .map((s: any) => s.task_id);
@@ -50,6 +58,11 @@ export default function TasksPage() {
           const scanned = (tasksData.tasks || [])
             .filter((t: any) => taskIds.includes(t.id) && !approvedTaskIds.includes(t.id));
           setScannedTasks(scanned);
+
+          // Compute public tasks (no QR required)
+          const publics = (tasksData.tasks || [])
+            .filter((t: any) => t.is_public && !approvedTaskIds.includes(t.id));
+          setPublicTasks(publics);
         }
       }
     } catch (err) {
@@ -93,6 +106,11 @@ export default function TasksPage() {
     setMessage("✓ Task submitted successfully!");
     setTaskRefresh((p) => p + 1);
     setTimeout(() => setMessage(""), 3000);
+  };
+
+  const handleViewMedia = (url: string) => {
+    setSelectedMedia(url);
+    setMediaViewOpen(true);
   };
 
   return (
@@ -144,6 +162,31 @@ export default function TasksPage() {
         </Card>
       )}
 
+      {/* Public Tasks - No QR Required */}
+      {publicTasks.length > 0 && (
+        <Card className="bg-slate-800 bg-[#454545]">
+          <CardHeader>
+            <CardTitle className="text-white">Public Tasks - No QR Required</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {publicTasks.map((task) => (
+              <div key={task.id} className="flex items-center justify-between bg-[#454545] p-4 rounded">
+                <div>
+                  <h3 className="font-semibold text-white">{task.title}</h3>
+                  <p className="text-sm text-gray-400">{task.explanation}</p>
+                </div>
+                <Button
+                  onClick={() => handleSubmitTask(task)}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  Submit Proof
+                </Button>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Completed Tasks */}
       <Card className="bg-[#454545] border-none">
         <CardHeader>
@@ -151,6 +194,42 @@ export default function TasksPage() {
         </CardHeader>
         <CardContent>
           <TaskList refreshTrigger={taskRefresh} showOnlyCompleted={true} />
+        </CardContent>
+      </Card>
+
+      {/* Submission History */}
+      <Card className="bg-[#454545] border-none">
+        <CardHeader>
+          <CardTitle className="text-white">📜 Submission History</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {userSubmissions.length === 0 ? (
+            <div className="text-gray-400">No submissions yet</div>
+          ) : (
+            userSubmissions.map((s: any) => (
+              <div key={s.id} className="flex items-center justify-between bg-[#454545] p-4 rounded border border-[#3a3a3a]">
+                <div className="min-w-0">
+                  <div className="text-white font-semibold truncate">{s.task_title}</div>
+                  <div className="text-xs text-gray-400 mt-1">{new Date(s.created_at).toLocaleString()}</div>
+                </div>
+                <div className="flex items-center gap-3">
+                  {s.status === "approved" && <Badge className="bg-green-600">Approved</Badge>}
+                  {s.status === "rejected" && <Badge className="bg-red-600">Rejected</Badge>}
+                  {s.status === "pending" && <Badge variant="secondary">Pending</Badge>}
+                  {s.proof_image && (
+                    <Button
+                      size="sm"
+                      variant="link"
+                      className="text-blue-400 p-0"
+                      onClick={() => handleViewMedia(s.proof_image)}
+                    >
+                      View
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
         </CardContent>
       </Card>
 
@@ -169,6 +248,24 @@ export default function TasksPage() {
           onSuccess={handleSubmitSuccess}
         />
       )}
+
+      {/* Media Viewer */}
+      <Dialog open={mediaViewOpen} onOpenChange={setMediaViewOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Proof</DialogTitle>
+          </DialogHeader>
+          {selectedMedia && (
+            selectedMedia.match(/\.(mp4|mov|webm|avi)$/i) || selectedMedia.includes('video/') ? (
+              <video src={selectedMedia} controls className="w-full h-auto rounded" preload="metadata">
+                Your browser does not support video playback.
+              </video>
+            ) : (
+              <img src={selectedMedia} alt="Proof" className="w-full h-auto rounded" />
+            )
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

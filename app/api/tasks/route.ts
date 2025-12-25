@@ -33,7 +33,8 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const { title, explanation, imageUrl, score, action } = await req.json();
+    const body = await req.json();
+    const { title, explanation, imageUrl, score, action } = body;
 
     if (action === "create") {
       if (!title || !explanation) {
@@ -48,6 +49,7 @@ export async function POST(req: Request) {
             explanation,
             image_url: imageUrl || null,
             score: score || 10,
+            is_public: body.isPublic === true,
             created_at: new Date().toISOString(),
           },
         ])
@@ -67,7 +69,7 @@ export async function POST(req: Request) {
     }
 
     if (action === "update") {
-      const { taskId, title, explanation, imageUrl } = await req.json();
+      const { taskId, title, explanation, imageUrl } = body;
       const { data, error } = await supabase
         .from("tasks")
         .update({
@@ -75,6 +77,22 @@ export async function POST(req: Request) {
           explanation,
           image_url: imageUrl || null,
         })
+        .eq("id", taskId)
+        .select()
+        .single();
+
+      if (error) return Response.json({ error: error.message }, { status: 400 });
+      return Response.json({ task: data });
+    }
+
+    if (action === "update-visibility") {
+      const { taskId, isPublic } = body;
+      if (!taskId || typeof isPublic !== "boolean") {
+        return Response.json({ error: "taskId and isPublic required" }, { status: 400 });
+      }
+      const { data, error } = await supabase
+        .from("tasks")
+        .update({ is_public: isPublic })
         .eq("id", taskId)
         .select()
         .single();

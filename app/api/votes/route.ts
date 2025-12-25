@@ -1,5 +1,17 @@
 import { NextResponse } from "next/server";
 
+function normalizeUrl(url?: string | null): string | null {
+  if (!url) return null;
+  // Already an app-relative proxy or absolute URL
+  if (url.startsWith("http") || url.startsWith("data:") || url.startsWith("/")) return url;
+  const publicUrl = process.env.R2_PUBLIC_URL;
+  if (publicUrl && publicUrl.length > 0) {
+    const needsSlash = !publicUrl.endsWith("/") && !url.startsWith("/");
+    return `${publicUrl}${needsSlash ? "/" : ""}${url}`;
+  }
+  return url;
+}
+
 // GET: Fetch all users (nominees) and optionally user's votes
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -61,7 +73,7 @@ export async function GET(request: Request) {
           id: user.id,
           name: user.username,
           sex: user.sex,
-          photo_url: user.profile_pic_url,
+          photo_url: normalizeUrl(user.profile_pic_url),
           voteCount: voteCounts[`${user.id}-${userCategory}`] || 0,
           category: userCategory,
         },
@@ -69,7 +81,7 @@ export async function GET(request: Request) {
           id: user.id,
           name: user.username,
           sex: user.sex,
-          photo_url: user.profile_pic_url,
+          photo_url: normalizeUrl(user.profile_pic_url),
           voteCount: voteCounts[`${user.id}-ugly_sweater`] || 0,
           category: "ugly_sweater",
         },

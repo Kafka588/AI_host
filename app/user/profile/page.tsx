@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { user, signOut, loading: authLoading } = useAuth();
+  const { user, signOut, loading: authLoading, updateUser } = useAuth();
 
   const [username, setUsername] = useState("");
   const [team, setTeam] = useState("team1");
@@ -21,6 +21,7 @@ export default function ProfilePage() {
   const [profilePicUrl, setProfilePicUrl] = useState<string | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState("");
 
   useEffect(() => {
@@ -33,19 +34,53 @@ export default function ProfilePage() {
     }
   }, [user]);
 
-  const handleFile = (file?: File) => {
+  const handleFile = async (file?: File) => {
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = reader.result as string;
-      setPreview(dataUrl);
-      setProfilePicUrl(dataUrl);
-    };
-    reader.readAsDataURL(file);
+    
+    setUploading(true);
+    try {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const dataUrl = reader.result as string;
+        setPreview(dataUrl);
+
+        // Upload to R2
+        try {
+          const response = await fetch("/api/upload", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              image: dataUrl,
+              type: "profile",
+            }),
+          });
+
+          if (!response.ok) throw new Error("Upload failed");
+
+          const { url } = await response.json();
+          setProfilePicUrl(url);
+          // Immediately show the R2 URL so it matches what others see
+          setPreview(url);
+        } catch (error: any) {
+          console.error("Upload error:", error);
+          setMessage(error?.message || "Зураг оруулах үед алдаа гарлаа.");
+        } finally {
+          setUploading(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      setUploading(false);
+      setMessage("Зураг уншихад алдаа гарлаа.");
+    }
   };
 
   const handleSave = async () => {
     if (!user) return;
+    if (uploading) {
+      setMessage("Зураг оруулж дуусахаар хадгална уу.");
+      return;
+    }
     setSaving(true);
     setMessage("");
     const { error } = await supabase
@@ -55,11 +90,13 @@ export default function ProfilePage() {
 
     setSaving(false);
     if (error) {
-      setMessage("Хадгалах үед алдаа гарлаа.");
+      setMessage(error.message || "Хадгалах үед алдаа гарлаа.");
     } else {
       setMessage("Амжилттай хадгаллаа.");
       const updated = { ...user, username, team, sex, profile_pic_url: profilePicUrl };
       localStorage.setItem("user", JSON.stringify(updated));
+      updateUser({ username, team, sex, profile_pic_url: profilePicUrl || null });
+      if (profilePicUrl) setPreview(profilePicUrl);
     }
   };
 
@@ -96,7 +133,13 @@ export default function ProfilePage() {
               </div>
               <div>
                 <Label className="mb-1 block text-white">Профайл зураг</Label>
-                <Input type="file" accept="image/*" onChange={(e) => handleFile(e.target.files?.[0])} />
+                <Input 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={(e) => handleFile(e.target.files?.[0])} 
+                  disabled={uploading}
+                />
+                {uploading && <p className="text-xs text-yellow-400 mt-1">Оруулж байна...</p>}
               </div>
             </div>
 
@@ -141,7 +184,7 @@ export default function ProfilePage() {
             {message && <div className="text-sm text-green-700 bg-green-100 px-3 py-2 rounded">{message}</div>}
 
             <div className="flex gap-3">
-              <Button className="flex-1 bg-[#FFD700] text-[#917800] font-bold" onClick={handleSave} disabled={saving}>
+              <Button className="flex-1 bg-[#FFD700] text-[#917800] font-bold" onClick={handleSave} disabled={saving || uploading}>
                 {saving ? "Хадгалж байна..." : "Хадгалах"}
               </Button>
               <Button variant="secondary" onClick={handleLogout} className="font-bold bg-red-400">

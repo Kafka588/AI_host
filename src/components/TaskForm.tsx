@@ -20,16 +20,43 @@ export function TaskForm({ onTaskAdded }: TaskFormProps) {
     explanation: "",
     imageUrl: "",
     score: 10,
+    isPublic: false,
   });
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (event) => {
+      reader.onload = async (event) => {
         const dataUrl = event.target?.result as string;
         setImagePreview(dataUrl);
-        setFormData((p) => ({ ...p, imageUrl: dataUrl }));
+        
+        // Upload to R2 immediately
+        try {
+          const uploadResponse = await fetch("/api/upload", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              image: dataUrl,
+              type: "task",
+              filename: `${Date.now()}-${file.name}`,
+            }),
+          });
+
+          const uploadData = await uploadResponse.json();
+          
+          if (uploadResponse.ok) {
+            setFormData((p) => ({ ...p, imageUrl: uploadData.url }));
+          } else {
+            console.error("Upload failed:", uploadData.error);
+            // Fallback to base64 if R2 upload fails
+            setFormData((p) => ({ ...p, imageUrl: dataUrl }));
+          }
+        } catch (err) {
+          console.error("Upload error:", err);
+          // Fallback to base64
+          setFormData((p) => ({ ...p, imageUrl: dataUrl }));
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -55,6 +82,7 @@ export function TaskForm({ onTaskAdded }: TaskFormProps) {
           explanation: formData.explanation,
           imageUrl: formData.imageUrl,
           score: formData.score,
+          isPublic: formData.isPublic,
           action: "create",
         }),
       });
@@ -67,7 +95,7 @@ export function TaskForm({ onTaskAdded }: TaskFormProps) {
       }
 
       setSuccess("Task added successfully!");
-      setFormData({ title: "", explanation: "", imageUrl: "", score: 10 });
+      setFormData({ title: "", explanation: "", imageUrl: "", score: 10, isPublic: false });
       setImagePreview(null);
       onTaskAdded?.();
 
@@ -138,6 +166,19 @@ export function TaskForm({ onTaskAdded }: TaskFormProps) {
               placeholder="10"
               className="bg-slate-700 border-slate-600 text-white"
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-white">Visibility</Label>
+            <div className="flex items-center gap-2 text-sm text-gray-300">
+              <input
+                id="isPublic"
+                type="checkbox"
+                checked={formData.isPublic}
+                onChange={(e) => setFormData((p) => ({ ...p, isPublic: e.target.checked }))}
+              />
+              <label htmlFor="isPublic">Publicly visible (no QR required)</label>
+            </div>
           </div>
 
           <div className="space-y-2">

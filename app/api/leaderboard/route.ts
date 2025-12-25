@@ -1,5 +1,16 @@
 import { supabase } from "@/lib/supabase";
 
+function normalizeUrl(url?: string | null): string | null {
+  if (!url) return null;
+  if (url.startsWith("http") || url.startsWith("data:") || url.startsWith("/")) return url;
+  const publicUrl = process.env.R2_PUBLIC_URL;
+  if (publicUrl && publicUrl.length > 0) {
+    const needsSlash = !publicUrl.endsWith("/") && !url.startsWith("/");
+    return `${publicUrl}${needsSlash ? "/" : ""}${url}`;
+  }
+  return url;
+}
+
 export async function GET(req: Request) {
   try {
     // Get all non-admin users
@@ -43,7 +54,7 @@ export async function GET(req: Request) {
         id: user.id,
         name: user.username || "Unknown",
         sex: user.sex,
-        profile_pic_url: user.profile_pic_url,
+        profile_pic_url: normalizeUrl(user.profile_pic_url),
         team: user.team,
         score: totalScore,
       };

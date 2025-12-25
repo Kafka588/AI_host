@@ -27,6 +27,7 @@ type Task = {
   explanation: string;
   image_url: string | null;
   score: number;
+  is_public?: boolean;
 };
 
 export default function ChallengesPage() {
@@ -113,6 +114,17 @@ export default function ChallengesPage() {
     setImageViewOpen(true);
   };
 
+  const downloadMedia = (url: string, filename: string) => {
+    // Create a hidden link and trigger download
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    link.target = "_blank";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div>
@@ -170,10 +182,38 @@ export default function ChallengesPage() {
                       <Badge variant="secondary" className="bg-green-900">{approvedCount} ✓ Approved</Badge>
                       <Badge variant="secondary" className="bg-yellow-900">{pendingCount} ⏳ Pending</Badge>
                       <Badge variant="secondary" className="bg-blue-900">{taskSubmissions.length} Total</Badge>
+                      <Badge variant="secondary" className={task.is_public ? "bg-green-800" : "bg-gray-700"}>
+                        {task.is_public ? "Public" : "QR Only"}
+                      </Badge>
+                    </div>
+                    <div className="flex gap-2 mb-3">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className={task.is_public ? "border-green-600 text-green-400" : "border-gray-600 text-gray-300"}
+                        onClick={async () => {
+                          const res = await fetch('/api/tasks', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ action: 'update-visibility', taskId: task.id, isPublic: !task.is_public }),
+                          });
+                          const data = await res.json();
+                          if (res.ok) {
+                            // refresh tasks list to reflect change
+                            fetchTasks();
+                          } else {
+                            console.error('Visibility update failed:', data.error);
+                          }
+                        }}
+                      >
+                        {task.is_public ? 'Make QR-only' : 'Make Public'}
+                      </Button>
                     </div>
                     <a
-                      href={`https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${task.id}`}
+                      href={`/api/qr-codes?taskId=${task.id}`}
                       download={`task-${task.title}-qr.png`}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="inline-block"
                     >
                       <Button size="sm" className="bg-purple-600 hover:bg-purple-700 w-full">
@@ -250,14 +290,28 @@ export default function ChallengesPage() {
                         )}
                       </TableCell>
                       <TableCell>
-                        <Button
-                          size="sm"
-                          variant="link"
-                          onClick={() => handleViewProof(submission.proof_image)}
-                          className="text-blue-400 p-0"
-                        >
-                          View
-                        </Button>
+                        <div className="flex gap-1">
+                          <Button
+                            size="sm"
+                            variant="link"
+                            onClick={() => handleViewProof(submission.proof_image)}
+                            className="text-blue-400 p-0"
+                          >
+                            View
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="link"
+                            onClick={() => {
+                              const ext = submission.proof_image.match(/\.(mp4|mov|webm|avi)$/i) ? 'video' : 'image';
+                              const filename = `${submission.user_name}-${submission.task_title}-${Date.now()}.${ext === 'video' ? 'mp4' : 'jpg'}`;
+                              downloadMedia(submission.proof_image, filename);
+                            }}
+                            className="text-green-400 p-0"
+                          >
+                            ⬇️
+                          </Button>
+                        </div>
                       </TableCell>
                       <TableCell>
                         {submission.status === "approved" && (
@@ -299,13 +353,42 @@ export default function ChallengesPage() {
         </CardContent>
       </Card>
 
-      {/* Image Viewer Modal */}
+      {/* Media Viewer Modal */}
       <Dialog open={imageViewOpen} onOpenChange={setImageViewOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>View Proof Image</DialogTitle>
+            <div className="flex items-center justify-between">
+              <DialogTitle>View Proof</DialogTitle>
+              {selectedImage && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    const ext = selectedImage.match(/\.(mp4|mov|webm|avi)$/i) ? 'mp4' : 'jpg';
+                    const filename = `submission-${Date.now()}.${ext}`;
+                    downloadMedia(selectedImage, filename);
+                  }}
+                  className="text-green-500 border-green-500 hover:bg-green-500/10"
+                >
+                  📥 Download
+                </Button>
+              )}
+            </div>
           </DialogHeader>
-          <img src={selectedImage} alt="Proof" className="w-full h-auto rounded" />
+          {selectedImage && (
+            selectedImage.match(/\.(mp4|mov|webm|avi)$/i) || selectedImage.includes('video/') ? (
+              <video 
+                src={selectedImage} 
+                controls 
+                className="w-full h-auto rounded"
+                preload="metadata"
+              >
+                Your browser does not support video playback.
+              </video>
+            ) : (
+              <img src={selectedImage} alt="Proof" className="w-full h-auto rounded" />
+            )
+          )}
         </DialogContent>
       </Dialog>
     </div>

@@ -154,13 +154,15 @@ export function TaskList({ refreshTrigger, showOnlyScanned = false, showOnlyComp
                       <div className="mt-3 flex flex-col items-start gap-2">
                         <div className="text-xs text-gray-400">Task ID: {task.id}</div>
                         <img
-                          src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${task.id}`}
+                          src={`/api/qr-codes?taskId=${task.id}`}
                           alt={`QR for ${task.title}`}
                           className="w-32 h-32 border-2 border-white rounded"
                         />
                         <a
-                          href={`https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${task.id}`}
+                          href={`/api/qr-codes?taskId=${task.id}`}
                           download={`task-${task.title}-qr.png`}
+                          target="_blank"
+                          rel="noopener noreferrer"
                           className="text-xs text-blue-400 hover:text-blue-300"
                         >
                           Download QR Code
