@@ -12,6 +12,7 @@ import { useEffect, useState, useRef } from "react";
 type Nominee = {
   name: string;
   score: number;
+	photo_url?: string | null;
 };
 
 type Team = {
@@ -24,7 +25,7 @@ function Board({
 	items,
 }: {
 	title: string;
-	items: { name: string; score: number }[];
+	items: { name: string; score: number; photo_url?: string | null }[];
 }) {
 	return (
 		<Card className="w-full bg-[#454545] border-none">
@@ -40,11 +41,17 @@ function Board({
 					</TableHeader>
 					<TableBody>
 						{items.map((item, i) => (
-							<TableRow key={item.name}>
+								<TableRow key={item.name}>
 								<TableCell>
-									<Badge variant="secondary" className="justify-center w-12 text-sm">
-										{i + 1}
-									</Badge>
+									<div className="h-10 w-10 rounded-full overflow-hidden bg-[#2d2d2d] flex items-center justify-center text-sm text-white">
+										{item.photo_url ? (
+											<img src={item.photo_url} alt={item.name} className="h-full w-full object-cover" />
+										) : (
+											<Badge variant="secondary" className="justify-center w-10 text-sm bg-[#6b7280] text-white">
+												{i + 1}
+											</Badge>
+										)}
+									</div>
 								</TableCell>
 								<TableCell className="truncate text-white text-lg">{item.name}</TableCell>
 								<TableCell className="text-right font-semibold text-[#FFD700] text-lg">
@@ -171,6 +178,7 @@ export default function AdminPage() {
 						.map((n: any) => ({
 							name: n.name,
 							score: n.voteCount,
+							photo_url: n.photo_url,
 						}));
 
 					const princeList = nominees
@@ -179,6 +187,7 @@ export default function AdminPage() {
 						.map((n: any) => ({
 							name: n.name,
 							score: n.voteCount,
+							photo_url: n.photo_url,
 						}));
 
 					const sweaterList = nominees
@@ -187,6 +196,7 @@ export default function AdminPage() {
 						.map((n: any) => ({
 							name: n.name,
 							score: n.voteCount,
+							photo_url: n.photo_url,
 						}));
 
 					setPrincess(princessList);
@@ -281,9 +291,9 @@ export default function AdminPage() {
 					{/* Right: Scoreboards - 2x2 Grid on 4K */}
 					<div className="h-full overflow-y-auto space-y-3">
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
-							<Board title="👑 Үдшийн ханхүү" items={princess} />
-							<Board title="🤴 Үдшийн гүнж" items={prince} />
-							<Board title="🧶 Хамгийн сайхан свитер" items={sweater} />
+							<Board title="👑 Үдшийн гүнж" items={princess} />
+							<Board title="🤴 Үдшийн ханхүү" items={prince} />
+							<Board title="🧶 Хамгийн шилдэг Ugly Sweater" items={sweater} />
 							<Board title="📝 Leaderboard" items={teams} />
 						</div>
 						

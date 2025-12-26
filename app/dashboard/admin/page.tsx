@@ -6,12 +6,28 @@ import { queueVideo } from "@/services/api";
 import { useState } from "react";
 
 const dummyActions = [
-  { id: "greet", label: "👋 Greet", color: "bg-blue-600 hover:bg-blue-700", video: "/Speech/Welcome.mp4" },
-  { id: "announce", label: "📢 Announce", color: "bg-purple-600 hover:bg-purple-700", video: null },
-  { id: "celebrate", label: "🎉 Celebrate", color: "bg-green-600 hover:bg-green-700", video: null },
-  { id: "joke", label: "😄 Tell Joke", color: "bg-yellow-600 hover:bg-yellow-700", video: null },
-  { id: "thanks", label: "🙏 Thank", color: "bg-pink-600 hover:bg-pink-700", video: null },
-  { id: "countdown", label: "⏱️ Countdown", color: "bg-red-600 hover:bg-red-700", video: null },
+  { id: "greet", label: "👋 Угтан авалтын үг", color: "bg-blue-600 hover:bg-blue-700", video: "/Speech/Welcome.mp4" },
+  { id: "announce", label: "📢 Үйл ажиллагааны танилцуулга", color: "bg-purple-600 hover:bg-purple-700", video: null },
+  { id: "competition", label: "🎉 House QR hunt үг", color: "bg-green-600 hover:bg-green-700", video: "/Speech/QR_Hunt_2.mp4" },
+  { id: "lunch", label: "😄 Lunch-ны үг", color: "bg-yellow-600 hover:bg-yellow-700", video: null },
+  { id: "talent_1", label: "🙏 Talent showcase-н үг (МТАХ-ийн мэндчилгээ)", color: "bg-red-600 hover:bg-red-700", video: null },
+  { id: "talent_2", label: "🙏 Talent showcase-н үг (Оролцогчдын мэндчилгээ)", color: "bg-red-600 hover:bg-red-700", video: null },
+  { id: "fun_and_physical", label: "⏱️ Fun and Physical game-ын үг", color: "bg-cyan-600 hover:bg-cyan-700", video: null },
+  { id: "fun_and_physical_phase_1", label: "⏱️ Fun and Physical game-ын үг (Phase 1)", color: "bg-cyan-600 hover:bg-cyan-700", video: null },
+  { id: "fun_and_physical_phase_2", label: "⏱️ Fun and Physical game-ын үг (Phase 2)", color: "bg-cyan-600 hover:bg-cyan-700", video: null },
+  { id: "lucky_box", label: "⏱️ Lucky box-н үг", color: "bg-pink-600 hover:bg-pink-700", video: null },
+  { id: "lucky_box_1", label: "⏱️ Lucky box-н үг (First Place)", color: "bg-pink-600 hover:bg-pink-700", video: null },
+  { id: "lucky_box_2", label: "⏱️ Lucky box-н үг (Second Place)", color: "bg-pink-600 hover:bg-pink-700", video: null },
+  { id: "lucky_box_3", label: "⏱️ Lucky box-н үг (Third Place)", color: "bg-pink-600 hover:bg-pink-700", video: null },
+  { id: "gift_unwrapping", label: "⏱️ Бэлэг сугалах ажиллагааны үг", color: "bg-red-600 hover:bg-red-700", video: null },
+  { id: "break", label: "⏱️ Завсарлагааны үг", color: "bg-emerald-600 hover:bg-emerald-700", video: null },
+  { id: "dinner", label: "⏱️ Dinner-ны үг", color: "bg-lime-600 hover:bg-lime-700", video: null },
+  { id: "secret_santa", label: "⏱️ Secret Santa-ны үг", color: "bg-slate-600 hover:bg-slate-700", video: null },
+  { id: "award", label: "⏱️ Award-ны үг", color: "bg-teal-600 hover:bg-teal-700", video: null },
+  { id: "cover_singer", label: "⏱️ Cover Singer-ын үг", color: "bg-sky-600 hover:bg-sky-700", video: null },
+  { id: "after_party_1", label: "⏱️ After party-ны үг (Дотор)", color: "bg-violet-600 hover:bg-violet-700", video: null },
+  { id: "after_party_2", label: "⏱️ After party-ны үг (Гадаа)", color: "bg-violet-600 hover:bg-red-700", video: null },
+  { id: "mini_countdown", label: "⏱️ Mini Countdown-ы үг", color: "bg-rose-600 hover:bg-rose-700", video: null },
 ];
 
 export default function AvatarControlPage() {
