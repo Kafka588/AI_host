@@ -125,6 +125,20 @@ export default function ChallengesPage() {
     document.body.removeChild(link);
   };
 
+  const downloadQRCode = async (taskId: string, taskTitle: string) => {
+    try {
+      const response = await fetch(`/api/qr-codes?taskId=${taskId}`);
+      const data = await response.json();
+      if (response.ok && data.url) {
+        downloadMedia(data.url, `task-${taskTitle}-qr.png`);
+      } else {
+        console.error("Failed to generate QR code:", data.error);
+      }
+    } catch (err) {
+      console.error("QR download error:", err);
+    }
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div>
@@ -209,17 +223,13 @@ export default function ChallengesPage() {
                         {task.is_public ? 'Make QR-only' : 'Make Public'}
                       </Button>
                     </div>
-                    <a
-                      href={`/api/qr-codes?taskId=${task.id}`}
-                      download={`task-${task.title}-qr.png`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-block"
+                    <Button
+                      size="sm"
+                      className="bg-purple-600 hover:bg-purple-700 w-full"
+                      onClick={() => downloadQRCode(task.id, task.title)}
                     >
-                      <Button size="sm" className="bg-purple-600 hover:bg-purple-700 w-full">
-                        📥 Download QR Code
-                      </Button>
-                    </a>
+                      📥 Download QR Code
+                    </Button>
                   </div>
                 );
               })}

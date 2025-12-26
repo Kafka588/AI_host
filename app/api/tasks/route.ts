@@ -56,7 +56,19 @@ export async function POST(req: Request) {
         .select()
         .single();
 
-      if (error) return Response.json({ error: error.message }, { status: 400 });
+      if (error) {
+        const msg = (error as any).message || String(error);
+        if (msg.toLowerCase().includes("is_public")) {
+          return Response.json(
+            {
+              error:
+                "Missing column is_public on tasks. Run: ALTER TABLE public.tasks ADD COLUMN IF NOT EXISTS is_public boolean NOT NULL DEFAULT false;",
+            },
+            { status: 400 }
+          );
+        }
+        return Response.json({ error: msg }, { status: 400 });
+      }
       return Response.json({ task: data });
     }
 
@@ -97,7 +109,19 @@ export async function POST(req: Request) {
         .select()
         .single();
 
-      if (error) return Response.json({ error: error.message }, { status: 400 });
+      if (error) {
+        const msg = (error as any).message || String(error);
+        if (msg.toLowerCase().includes("is_public")) {
+          return Response.json(
+            {
+              error:
+                "Missing column is_public on tasks. Run: ALTER TABLE public.tasks ADD COLUMN IF NOT EXISTS is_public boolean NOT NULL DEFAULT false;",
+            },
+            { status: 400 }
+          );
+        }
+        return Response.json({ error: msg }, { status: 400 });
+      }
       return Response.json({ task: data });
     }
 
