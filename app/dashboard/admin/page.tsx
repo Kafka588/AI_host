@@ -6,12 +6,12 @@ import { queueVideo } from "@/services/api";
 import { useState } from "react";
 
 const dummyActions = [
-  { id: "greet", label: "👋 Угтан авалтын үг", color: "bg-blue-600 hover:bg-blue-700", video: "/Speech/Welcome.mp4" },
+  { id: "greet", label: "👋 Угтан авалтын үг", color: "bg-blue-600 hover:bg-blue-700", video: "/Speech/Ugtan awah.mp4" },
   { id: "announce", label: "📢 Үйл ажиллагааны танилцуулга", color: "bg-purple-600 hover:bg-purple-700", video: "/Speech/Uil_Ajillagaanii_taniltsuulga.mp4" },
   { id: "competition", label: "🎉 House QR hunt үг", color: "bg-green-600 hover:bg-green-700", video: "/Speech/QR_Hunt.mp4" },
   { id: "lunch", label: "😄 Lunch-ны үг", color: "bg-yellow-600 hover:bg-yellow-700", video: "/Speech/Lunch.mp4" },
   { id: "talent_1", label: "🙏 Talent showcase-н үг (МТАХ-ийн мэндчилгээ)", color: "bg-red-600 hover:bg-red-700", video: "/Speech/Talent Showcase_before.mp4" },
-  { id: "talent_2", label: "🙏 Talent showcase-н үг (Оролцогчдын мэндчилгээ)", color: "bg-red-600 hover:bg-red-700", video: null },
+  { id: "talent_2", label: "🙏 Talent showcase-н үг (Оролцогчдын мэндчилгээ)", color: "bg-red-600 hover:bg-red-700", video: "" },
   { id: "fun_and_physical_phase_1", label: "⏱️ Fun and Physical game-ын үг (Phase 1)", color: "bg-cyan-600 hover:bg-cyan-700", video: "Fun and Physical first.mp4" },
   { id: "fun_and_physical_phase_2", label: "⏱️ Fun and Physical game-ын үг (Phase 2)", color: "bg-cyan-600 hover:bg-cyan-700", video: "Fun and Physical second.mp4" },
   { id: "lucky_box", label: "⏱️ Lucky box-н үг", color: "bg-pink-600 hover:bg-pink-700", video: "/Speech/Lucky Box.mp4" },

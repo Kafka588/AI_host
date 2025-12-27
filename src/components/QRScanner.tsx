@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import jsQR from "jsqr";
 
 type QRScannerProps = {
   open: boolean;
@@ -16,6 +17,8 @@ export function QRScanner({ open, onOpenChange, onScan }: QRScannerProps) {
   const [scanning, setScanning] = useState(false);
   const [error, setError] = useState("");
   const [permissionDenied, setPermissionDenied] = useState(false);
+  const [lastScan, setLastScan] = useState<string>("");
+  const scanIntervalRef = useRef<number | null>(null);
 
   const startCamera = async () => {
     try {
@@ -27,7 +30,11 @@ export function QRScanner({ open, onOpenChange, onScan }: QRScannerProps) {
         setScanning(true);
         setError("");
         setPermissionDenied(false);
-        scanQRCode();
+        
+        // Start scanning at 100ms intervals
+        scanIntervalRef.current = window.setInterval(() => {
+          scanQRCode();
+        }, 100);
       }
     } catch (err: any) {
       // Check if it's a permission denied error
@@ -46,12 +53,21 @@ export function QRScanner({ open, onOpenChange, onScan }: QRScannerProps) {
     if (!open) {
       setScanning(false);
       setPermissionDenied(false);
+      setLastScan("");
+      if (scanIntervalRef.current) {
+        clearInterval(scanIntervalRef.current);
+        scanIntervalRef.current = null;
+      }
       return;
     }
 
     startCamera();
 
     return () => {
+      if (scanIntervalRef.current) {
+        clearInterval(scanIntervalRef.current);
+        scanIntervalRef.current = null;
+      }
       if (videoRef.current?.srcObject) {
         const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
         tracks.forEach((track) => track.stop());
@@ -63,18 +79,45 @@ export function QRScanner({ open, onOpenChange, onScan }: QRScannerProps) {
     const canvas = canvasRef.current;
     const video = videoRef.current;
 
-    if (!canvas || !video || !scanning) return;
+    if (!canvas || !video || !scanning || video.readyState !== video.HAVE_ENOUGH_DATA) {
+      return;
+    }
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
-    ctx.drawImage(video, 0, 0);
+    
+    if (canvas.width === 0 || canvas.height === 0) return;
+    
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    
+    const code = jsQR(imageData.data, imageData.width, imageData.height, {
+      inversionAttempts: "dontInvert",
+    });
 
-    // Simple QR detection - look for task ID in URL
-    // In production, you'd use a QR code library like jsQR
-    requestAnimationFrame(scanQRCode);
+    if (code && code.data) {
+      // Prevent duplicate scans
+      if (code.data === lastScan) return;
+      
+      setLastScan(code.data);
+      setScanning(false);
+      
+      // Extract task ID from the QR data (could be just the ID or a URL)
+      const taskId = code.data.includes('taskId=') 
+        ? new URL(code.data).searchParams.get('taskId') || code.data
+        : code.data;
+      
+      onScan(taskId);
+      
+      // Stop camera
+      if (videoRef.current?.srcObject) {
+        const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
+        tracks.forEach((track) => track.stop());
+      }
+    }
   };
 
   const handleManualEntry = () => {
@@ -100,13 +143,18 @@ export function QRScanner({ open, onOpenChange, onScan }: QRScannerProps) {
         <div className="space-y-4">
           {!permissionDenied ? (
             <>
-              <div className="bg-black rounded-lg overflow-hidden">
+              <div className="bg-black rounded-lg overflow-hidden relative">
                 <video
                   ref={videoRef}
                   autoPlay
                   playsInline
                   className="w-full h-64 object-cover"
                 />
+                {scanning && (
+                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-blue-600 text-white px-3 py-1 rounded-full text-sm">
+                    📷 Scanning...
+                  </div>
+                )}
               </div>
               <canvas ref={canvasRef} className="hidden" />
             </>

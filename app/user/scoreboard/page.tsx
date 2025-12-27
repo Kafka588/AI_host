@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 type LeaderboardUser = {
   name: string;
@@ -31,6 +32,9 @@ function Board({
   items: LeaderboardUser[] | LeaderboardTeam[];
 }) {
   const isUserBoard = items.length > 0 && 'profile_pic_url' in items[0];
+  const [showAll, setShowAll] = useState(false);
+  const displayItems = showAll ? items : items.slice(0, 5);
+  const hasMore = items.length > 5;
   
   return (
     <Card className="w-full bg-[#2d2d2d] border-none">
@@ -41,7 +45,8 @@ function Board({
         {items.length === 0 ? (
           <div className="text-center text-[#dcdcdc]">No data yet</div>
         ) : (
-          items.map((item, i) => (
+          <>
+            {displayItems.map((item, i) => (
             <div
               key={item.name}
               className="flex items-center justify-between rounded-lg border px-4 py-3 bg-[#454545] border-none text-[#dcdcdc]"
@@ -64,7 +69,18 @@ function Board({
               </div>
               <div className="text-xl font-bold text-[#FFD700]">{item.score}</div>
             </div>
-          ))
+          ))}
+          {hasMore && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowAll(!showAll)}
+              className="w-full mt-2 bg-[#3d3d3d] text-[#dcdcdc] border-[#555] hover:bg-[#4d4d4d]"
+            >
+              {showAll ? "Show Less" : `Show All (${items.length})`}
+            </Button>
+          )}
+          </>
         )}
       </CardContent>
     </Card>
@@ -80,6 +96,10 @@ function VotingBoard({
   items: VotingNominee[];
   icon: string;
 }) {
+  const [showAll, setShowAll] = useState(false);
+  const displayItems = showAll ? items : items.slice(0, 5);
+  const hasMore = items.length > 5;
+  
   return (
     <Card className="w-full bg-[#2d2d2d] border-none">
       <CardHeader>
@@ -89,7 +109,8 @@ function VotingBoard({
         {items.length === 0 ? (
           <div className="text-center text-[#dcdcdc]">No nominees yet</div>
         ) : (
-          items.map((nominee, i) => (
+          <>
+            {displayItems.map((nominee, i) => (
             <div
               key={nominee.id}
               className="flex items-center justify-between rounded-lg border px-4 py-3 bg-[#454545] border-none text-[#dcdcdc]"
@@ -120,7 +141,18 @@ function VotingBoard({
                 <div className="text-2xl">👑</div>
               )}
             </div>
-          ))
+          ))}
+          {hasMore && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowAll(!showAll)}
+              className="w-full mt-2 bg-[#3d3d3d] text-[#dcdcdc] border-[#555] hover:bg-[#4d4d4d]"
+            >
+              {showAll ? "Show Less" : `Show All (${items.length})`}
+            </Button>
+          )}
+          </>
         )}
       </CardContent>
     </Card>
