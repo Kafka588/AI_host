@@ -35,6 +35,7 @@ export default function TasksPage() {
   const [userSubmissions, setUserSubmissions] = useState<any[]>([]);
   const [mediaViewOpen, setMediaViewOpen] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState<string>("");
+  const [selectedText, setSelectedText] = useState<string | null>(null);
 
   useEffect(() => {
     fetchScannedTasks();
@@ -55,17 +56,40 @@ export default function TasksPage() {
           const submissionsResponse = await fetch(`/api/submissions?userId=${user.id}`);
           const submissionsData = await submissionsResponse.json();
           setUserSubmissions(submissionsData.submissions || []);
-          // Hide tasks that already have a submission (pending/approved/rejected) to avoid duplicate uploads
-          const submittedTaskIds = (submissionsData.submissions || []).map((s: any) => s.task_id);
+          // Determine which tasks the user cannot reattempt: any pending or approved
+          const userPendingOrApprovedTaskIds = new Set(
+            (submissionsData.submissions || [])
+              .filter((s: any) => s.status !== "rejected")
+              .map((s: any) => s.task_id)
+          );
+
+          // Fetch all submissions to detect globally accomplished (approved) tasks
+          const allSubsResponse = await fetch(`/api/submissions`);
+          const allSubsData = await allSubsResponse.json();
+          const approvedTaskIds = new Set(
+            (allSubsData.submissions || [])
+              .filter((s: any) => s.status === "approved")
+              .map((s: any) => s.task_id)
+          );
           
           // Filter out already completed tasks
           const scanned = (tasksData.tasks || [])
-            .filter((t: any) => taskIds.includes(t.id) && !submittedTaskIds.includes(t.id));
+            .filter(
+              (t: any) =>
+                taskIds.includes(t.id) &&
+                !userPendingOrApprovedTaskIds.has(t.id) &&
+                !approvedTaskIds.has(t.id)
+            );
           setScannedTasks(scanned);
 
           // Compute public tasks (no QR required)
           const publics = (tasksData.tasks || [])
-            .filter((t: any) => t.is_public && !submittedTaskIds.includes(t.id));
+            .filter(
+              (t: any) =>
+                t.is_public &&
+                !userPendingOrApprovedTaskIds.has(t.id) &&
+                !approvedTaskIds.has(t.id)
+            );
           setPublicTasks(publics);
         }
       }
@@ -117,8 +141,9 @@ export default function TasksPage() {
     setTimeout(() => setMessage(""), 3000);
   };
 
-  const handleViewMedia = (url: string) => {
+  const handleViewMedia = (url: string, text?: string | null) => {
     setSelectedMedia(url);
+    setSelectedText(text || null);
     setMediaViewOpen(true);
   };
 
@@ -220,17 +245,20 @@ export default function TasksPage() {
                 <div className="min-w-0 flex-1">
                   <div className="text-white font-semibold truncate">{s.task_title}</div>
                   <div className="text-xs text-gray-400 mt-1">{new Date(s.created_at).toLocaleString()}</div>
+                  {s.proof_text && (
+                    <div className="text-sm text-gray-300 mt-2 whitespace-pre-wrap break-words">📝 {s.proof_text}</div>
+                  )}
                 </div>
                 <div className="flex items-center gap-3 flex-wrap">
                   {s.status === "approved" && <Badge className="bg-green-600">Approved</Badge>}
                   {s.status === "rejected" && <Badge className="bg-red-600">Rejected</Badge>}
                   {s.status === "pending" && <Badge variant="secondary">Pending</Badge>}
-                  {s.proof_image && (
+                  {(s.proof_image || s.proof_text) && (
                     <Button
                       size="sm"
                       variant="link"
                       className="text-blue-400 p-0"
-                      onClick={() => handleViewMedia(s.proof_image)}
+                      onClick={() => handleViewMedia(s.proof_image || "", s.proof_text || null)}
                     >
                       View
                     </Button>
@@ -272,6 +300,12 @@ export default function TasksPage() {
             ) : (
               <img src={selectedMedia} alt="Proof" className="w-full h-auto rounded" />
             )
+          )}
+          {selectedText && (
+            <div className="bg-slate-700 p-4 rounded border border-slate-600 mt-4">
+              <h3 className="text-sm font-semibold text-gray-300 mb-2">Comments</h3>
+              <p className="text-sm text-gray-300 whitespace-pre-wrap break-words">{selectedText}</p>
+            </div>
           )}
         </DialogContent>
       </Dialog>

@@ -285,7 +285,7 @@ export default function ChallengesPage() {
                   <TableHead className="text-gray-300">User</TableHead>
                   <TableHead className="text-gray-300">Task</TableHead>
                   <TableHead className="text-gray-300">Submitted</TableHead>
-                  <TableHead className="text-gray-300">Image</TableHead>
+                  <TableHead className="text-gray-300">Proof</TableHead>
                   <TableHead className="text-gray-300">Status</TableHead>
                   <TableHead className="text-right text-gray-300">Actions</TableHead>
                 </TableRow>
@@ -331,18 +331,20 @@ export default function ChallengesPage() {
                           >
                             View
                           </Button>
-                          <Button
-                            size="sm"
-                            variant="link"
-                            onClick={() => {
-                              const ext = submission.proof_image.match(/\.(mp4|mov|webm|avi)$/i) ? 'video' : 'image';
-                              const filename = `${submission.user_name}-${submission.task_title}-${Date.now()}.${ext === 'video' ? 'mp4' : 'jpg'}`;
-                              downloadMedia(submission.proof_image, filename);
-                            }}
-                            className="text-green-400 p-0"
-                          >
-                            ⬇️
-                          </Button>
+                          {submission.proof_image && submission.proof_image.trim() !== "" && (
+                            <Button
+                              size="sm"
+                              variant="link"
+                              onClick={() => {
+                                const ext = submission.proof_image.match(/\.(mp4|mov|webm|avi)$/i) ? 'video' : 'image';
+                                const filename = `${submission.user_name}-${submission.task_title}-${Date.now()}.${ext === 'video' ? 'mp4' : 'jpg'}`;
+                                downloadMedia(submission.proof_image, filename);
+                              }}
+                              className="text-green-400 p-0"
+                            >
+                              ⬇️
+                            </Button>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>

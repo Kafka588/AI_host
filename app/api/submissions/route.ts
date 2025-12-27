@@ -51,14 +51,18 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const { action, id, status, userId, userName, taskId, taskTitle, proofImage } = await req.json();
+    const { action, id, status, userId, userName, taskId, taskTitle, proofImage, proofText } = await req.json();
 
     if (action === "create") {
-      if (!userId || !taskId || !proofImage) {
-        return Response.json({ error: "User ID, Task ID, and Proof Image required" }, { status: 400 });
+      if (!userId || !taskId) {
+        return Response.json({ error: "User ID and Task ID required" }, { status: 400 });
+      }
+      if (!proofImage && !proofText) {
+        return Response.json({ error: "At least one proof required (image/video or text)" }, { status: 400 });
       }
 
-      const { data, error } = await supabase
+      // Primary insert including optional proof_text
+      let { data, error } = await supabase
         .from("submissions")
         .insert([
           {
@@ -66,13 +70,57 @@ export async function POST(req: Request) {
             user_name: userName,
             task_id: taskId,
             task_title: taskTitle,
-            proof_image: proofImage,
+            proof_image: proofImage || null,
+            proof_text: proofText || null,
             status: "pending",
             created_at: new Date().toISOString(),
           },
         ])
         .select()
         .single();
+      // Fallback: if column 'proof_text' doesn't exist yet, retry without it
+      if (error && /proof_text|schema cache/i.test(error.message)) {
+        const retry = await supabase
+          .from("submissions")
+          .insert([
+            {
+              user_id: userId,
+              user_name: userName,
+              task_id: taskId,
+              task_title: taskTitle,
+              proof_image: proofImage || null,
+              status: "pending",
+              created_at: new Date().toISOString(),
+            },
+          ])
+          .select()
+          .single();
+        data = retry.data as any;
+        error = retry.error as any;
+      }
+
+      // Fallback: if NOT NULL constraint on proof_image blocks text-only submissions,
+      // retry with empty string when proofText is present
+      if (error && /not-null constraint/i.test(error.message) && /proof_image/i.test(error.message) && proofText) {
+        const retry2 = await supabase
+          .from("submissions")
+          .insert([
+            {
+              user_id: userId,
+              user_name: userName,
+              task_id: taskId,
+              task_title: taskTitle,
+              proof_image: "",
+              proof_text: proofText || null,
+              status: "pending",
+              created_at: new Date().toISOString(),
+            },
+          ])
+          .select()
+          .single();
+        data = retry2.data as any;
+        error = retry2.error as any;
+      }
 
       if (error) return Response.json({ error: error.message }, { status: 400 });
       return Response.json({ submission: data });
