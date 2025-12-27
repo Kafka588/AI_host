@@ -119,9 +119,9 @@ export function TaskSubmitDialog({ open, onOpenChange, taskId, taskTitle, onSucc
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="w-[95vw] max-w-xl max-h-[90vh] overflow-y-auto px-4 sm:px-6">
         <DialogHeader>
-          <DialogTitle>Submit Proof for: {taskTitle}</DialogTitle>
+          <DialogTitle className="break-words">Submit Proof for: {taskTitle}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div>
@@ -133,7 +133,7 @@ export function TaskSubmitDialog({ open, onOpenChange, taskId, taskTitle, onSucc
               disabled={uploading}
               className="mt-2"
             />
-            <p className="text-xs text-gray-400 mt-1">Supported: Images (JPG, PNG) and Videos (MP4, MOV, WebM)</p>
+            <p className="text-xs text-gray-400 mt-1 break-words">Supported: Images (JPG, PNG) and Videos (MP4, MOV, WebM)</p>
           </div>
 
           {proofImage && (
@@ -155,12 +155,12 @@ export function TaskSubmitDialog({ open, onOpenChange, taskId, taskTitle, onSucc
           )}
 
           {error && (
-            <div className="text-sm text-red-600 bg-red-50 p-3 rounded">
+            <div className="text-sm text-red-600 bg-red-50 p-3 rounded break-words">
               {error}
             </div>
           )}
 
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <Button
               onClick={handleSubmit}
               disabled={uploading || !proofImage}
@@ -168,7 +168,7 @@ export function TaskSubmitDialog({ open, onOpenChange, taskId, taskTitle, onSucc
             >
               {uploading ? "Submitting..." : "Submit Proof"}
             </Button>
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
+            <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
           </div>

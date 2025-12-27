@@ -20,6 +20,17 @@ type ScannedTask = {
 
 export default function TasksPage() {
   const { user } = useAuth();
+  const normalizeExplanation = (text: string) => {
+    if (!text) return "";
+    const trimmed = text.trim();
+    const looksLikeCode = /objects|annotate|order_by|select|from|Count\(/i.test(trimmed);
+    const parts = trimmed.split("/").map((p) => p.trim()).filter(Boolean);
+    if (looksLikeCode && parts.length > 1) {
+      return parts[parts.length - 1];
+    }
+    return trimmed;
+  };
+
   const [scannerOpen, setScannerOpen] = useState(false);
   const [taskRefresh, setTaskRefresh] = useState(0);
   const [message, setMessage] = useState("");
@@ -50,18 +61,17 @@ export default function TasksPage() {
           const submissionsResponse = await fetch(`/api/submissions?userId=${user.id}`);
           const submissionsData = await submissionsResponse.json();
           setUserSubmissions(submissionsData.submissions || []);
-          const approvedTaskIds = (submissionsData.submissions || [])
-            .filter((s: any) => s.status === "approved")
-            .map((s: any) => s.task_id);
+          // Hide tasks that already have a submission (pending/approved/rejected) to avoid duplicate uploads
+          const submittedTaskIds = (submissionsData.submissions || []).map((s: any) => s.task_id);
           
           // Filter out already completed tasks
           const scanned = (tasksData.tasks || [])
-            .filter((t: any) => taskIds.includes(t.id) && !approvedTaskIds.includes(t.id));
+            .filter((t: any) => taskIds.includes(t.id) && !submittedTaskIds.includes(t.id));
           setScannedTasks(scanned);
 
           // Compute public tasks (no QR required)
           const publics = (tasksData.tasks || [])
-            .filter((t: any) => t.is_public && !approvedTaskIds.includes(t.id));
+            .filter((t: any) => t.is_public && !submittedTaskIds.includes(t.id));
           setPublicTasks(publics);
         }
       }
@@ -103,6 +113,11 @@ export default function TasksPage() {
   };
 
   const handleSubmitSuccess = () => {
+    if (selectedTask) {
+      setScannedTasks((prev) => prev.filter((t) => t.id !== selectedTask.id));
+      setPublicTasks((prev) => prev.filter((t) => t.id !== selectedTask.id));
+      setSelectedTask(null);
+    }
     setMessage("✓ Task submitted successfully!");
     setTaskRefresh((p) => p + 1);
     setTimeout(() => setMessage(""), 3000);
@@ -145,14 +160,14 @@ export default function TasksPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             {scannedTasks.map((task) => (
-              <div key={task.id} className="flex items-center justify-between bg-[#454545] p-4 rounded">
-                <div>
+              <div key={task.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-[#454545] p-4 rounded">
+                <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-white">{task.title}</h3>
-                  <p className="text-sm text-gray-400">{task.explanation}</p>
+                  <p className="text-sm text-gray-400">{normalizeExplanation(task.explanation)}</p>
                 </div>
                 <Button
                   onClick={() => handleSubmitTask(task)}
-                  className="bg-green-600 hover:bg-green-700"
+                  className="bg-green-600 hover:bg-green-700 w-full sm:w-auto whitespace-nowrap"
                 >
                   Submit Proof
                 </Button>
@@ -170,14 +185,14 @@ export default function TasksPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             {publicTasks.map((task) => (
-              <div key={task.id} className="flex items-center justify-between bg-[#454545] p-4 rounded">
-                <div>
+              <div key={task.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-[#454545] p-4 rounded">
+                <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-white">{task.title}</h3>
-                  <p className="text-sm text-gray-400">{task.explanation}</p>
+                  <p className="text-sm text-gray-400">{normalizeExplanation(task.explanation)}</p>
                 </div>
                 <Button
                   onClick={() => handleSubmitTask(task)}
-                  className="bg-blue-600 hover:bg-blue-700"
+                  className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto whitespace-nowrap"
                 >
                   Submit Proof
                 </Button>
@@ -187,7 +202,7 @@ export default function TasksPage() {
         </Card>
       )}
 
-      {/* Completed Tasks */}
+      {/* Completed Tasks
       <Card className="bg-[#454545] border-none">
         <CardHeader>
           <CardTitle className="text-white">🎉 Accomplished Tasks - Points Earned</CardTitle>
@@ -195,7 +210,7 @@ export default function TasksPage() {
         <CardContent>
           <TaskList refreshTrigger={taskRefresh} showOnlyCompleted={true} />
         </CardContent>
-      </Card>
+      </Card> */}
 
       {/* Submission History */}
       <Card className="bg-[#454545] border-none">
@@ -207,12 +222,12 @@ export default function TasksPage() {
             <div className="text-gray-400">No submissions yet</div>
           ) : (
             userSubmissions.map((s: any) => (
-              <div key={s.id} className="flex items-center justify-between bg-[#454545] p-4 rounded border border-[#3a3a3a]">
-                <div className="min-w-0">
+              <div key={s.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-[#454545] p-4 rounded border border-[#3a3a3a]">
+                <div className="min-w-0 flex-1">
                   <div className="text-white font-semibold truncate">{s.task_title}</div>
                   <div className="text-xs text-gray-400 mt-1">{new Date(s.created_at).toLocaleString()}</div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 flex-wrap">
                   {s.status === "approved" && <Badge className="bg-green-600">Approved</Badge>}
                   {s.status === "rejected" && <Badge className="bg-red-600">Rejected</Badge>}
                   {s.status === "pending" && <Badge variant="secondary">Pending</Badge>}

@@ -19,24 +19,42 @@ export function QRScanner({ open, onOpenChange, onScan }: QRScannerProps) {
   const [permissionDenied, setPermissionDenied] = useState(false);
   const [lastScan, setLastScan] = useState<string>("");
   const scanIntervalRef = useRef<number | null>(null);
+  const shouldScanRef = useRef(false);
 
   const startCamera = async () => {
+    console.log("[QR] Starting camera...");
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "environment" },
       });
+      console.log("[QR] Camera stream obtained");
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        setScanning(true);
         setError("");
         setPermissionDenied(false);
         
-        // Start scanning at 100ms intervals
-        scanIntervalRef.current = window.setInterval(() => {
-          scanQRCode();
+        // Set up scanning to start when video is ready
+        const checkVideoReady = setInterval(() => {
+          if (videoRef.current && videoRef.current.videoWidth > 0) {
+            console.log("[QR] Video ready, starting scan");
+            clearInterval(checkVideoReady);
+            shouldScanRef.current = true;
+            setScanning(true);
+            scanQRCodeLoop();
+          }
         }, 100);
+        
+        // Timeout after 5 seconds
+        setTimeout(() => {
+          clearInterval(checkVideoReady);
+          if (videoRef.current && videoRef.current.videoWidth === 0) {
+            console.warn("[QR] Video never loaded");
+            setError("Camera loaded but video stream failed. Try closing and reopening.");
+          }
+        }, 5000);
       }
     } catch (err: any) {
+      console.error("[QR] Camera error:", err);
       // Check if it's a permission denied error
       if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
         setPermissionDenied(true);
@@ -49,8 +67,26 @@ export function QRScanner({ open, onOpenChange, onScan }: QRScannerProps) {
     }
   };
 
+  const scanQRCodeLoop = () => {
+    if (!shouldScanRef.current || !videoRef.current) {
+      console.log("[QR] Scan loop stopped");
+      return;
+    }
+
+    try {
+      scanQRCode();
+    } catch (err) {
+      console.error("[QR] Loop error:", err);
+    }
+
+    // Continue scanning with requestAnimationFrame (60fps)
+    requestAnimationFrame(scanQRCodeLoop);
+  };
+
   useEffect(() => {
+    console.log("[QR] Dialog opened:", open);
     if (!open) {
+      shouldScanRef.current = false;
       setScanning(false);
       setPermissionDenied(false);
       setLastScan("");
@@ -64,6 +100,8 @@ export function QRScanner({ open, onOpenChange, onScan }: QRScannerProps) {
     startCamera();
 
     return () => {
+      console.log("[QR] Cleanup");
+      shouldScanRef.current = false;
       if (scanIntervalRef.current) {
         clearInterval(scanIntervalRef.current);
         scanIntervalRef.current = null;
@@ -79,44 +117,56 @@ export function QRScanner({ open, onOpenChange, onScan }: QRScannerProps) {
     const canvas = canvasRef.current;
     const video = videoRef.current;
 
-    if (!canvas || !video || !scanning || video.readyState !== video.HAVE_ENOUGH_DATA) {
+    if (!canvas || !video) {
+      console.log("[QR] Missing canvas or video");
       return;
     }
 
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    if (video.videoWidth === 0 || video.videoHeight === 0) {
+      return; // Silently skip during readiness phase
+    }
 
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    
-    if (canvas.width === 0 || canvas.height === 0) return;
-    
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    
-    const code = jsQR(imageData.data, imageData.width, imageData.height, {
-      inversionAttempts: "dontInvert",
-    });
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    if (!ctx) {
+      console.log("[QR] No canvas context");
+      return;
+    }
 
-    if (code && code.data) {
-      // Prevent duplicate scans
-      if (code.data === lastScan) return;
+    try {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
       
-      setLastScan(code.data);
-      setScanning(false);
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       
-      // Extract task ID from the QR data (could be just the ID or a URL)
-      const taskId = code.data.includes('taskId=') 
-        ? new URL(code.data).searchParams.get('taskId') || code.data
-        : code.data;
+      console.log("[QR] Scanning frame...", { w: canvas.width, h: canvas.height });
       
-      onScan(taskId);
+      const code = jsQR(imageData.data, imageData.width, imageData.height, {
+        inversionAttempts: "attemptBoth",
+      });
       
-      // Stop camera
-      if (videoRef.current?.srcObject) {
-        const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
-        tracks.forEach((track) => track.stop());
+      if (code && code.data) {
+        if (code.data === lastScan) return; // Skip duplicate
+        
+        console.log("[QR] Code detected:", code.data);
+        setLastScan(code.data);
+        shouldScanRef.current = false;
+        setScanning(false);
+        
+        const taskId = code.data.includes('taskId=') 
+          ? new URL(code.data).searchParams.get('taskId') || code.data
+          : code.data;
+        
+        console.log("[QR] Extracted taskId:", taskId);
+        onScan(taskId);
+        
+        if (videoRef.current?.srcObject) {
+          const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
+          tracks.forEach((track) => track.stop());
+        }
       }
+    } catch (err) {
+      console.error("[QR] Scan error:", err);
     }
   };
 
@@ -136,9 +186,9 @@ export function QRScanner({ open, onOpenChange, onScan }: QRScannerProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md w-[95vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Scan Task QR Code</DialogTitle>
+          <DialogTitle className="break-words">Scan Task QR Code</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           {!permissionDenied ? (
@@ -162,7 +212,7 @@ export function QRScanner({ open, onOpenChange, onScan }: QRScannerProps) {
             <div className="bg-gray-100 rounded-lg p-6 text-center space-y-4">
               <div className="text-4xl">📷</div>
               <p className="text-gray-700 font-medium">Camera Permission Required</p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-600 break-words">
                 Please allow camera access in your browser settings to scan QR codes. You can also enter the task ID manually below.
               </p>
               <Button
@@ -175,12 +225,12 @@ export function QRScanner({ open, onOpenChange, onScan }: QRScannerProps) {
           )}
 
           {error && (
-            <div className="text-sm text-red-600 bg-red-50 p-3 rounded">
+            <div className="text-sm text-red-600 bg-red-50 p-3 rounded break-words">
               {error}
             </div>
           )}
 
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <Button
               className="flex-1 bg-blue-600 hover:bg-blue-700"
               onClick={handleManualEntry}
@@ -189,6 +239,7 @@ export function QRScanner({ open, onOpenChange, onScan }: QRScannerProps) {
             </Button>
             <Button
               variant="outline"
+              className="flex-1"
               onClick={() => onOpenChange(false)}
             >
               Close

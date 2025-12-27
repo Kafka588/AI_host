@@ -23,6 +23,16 @@ type TaskListProps = {
 
 export function TaskList({ refreshTrigger, showOnlyScanned = false, showOnlyCompleted = false, showQRCodes = false }: TaskListProps) {
   const { user } = useAuth();
+  const normalizeExplanation = (text: string) => {
+    if (!text) return "";
+    const trimmed = text.trim();
+    const looksLikeCode = /objects|annotate|order_by|select|from|Count\(/i.test(trimmed);
+    const parts = trimmed.split("/").map((p) => p.trim()).filter(Boolean);
+    if (looksLikeCode && parts.length > 1) {
+      return parts[parts.length - 1];
+    }
+    return trimmed;
+  };
   const [tasks, setTasks] = useState<Task[]>([]);
   const [scannedTaskIds, setScannedTaskIds] = useState<string[]>([]);
   const [completedTaskIds, setCompletedTaskIds] = useState<string[]>([]);
@@ -145,7 +155,7 @@ export function TaskList({ refreshTrigger, showOnlyScanned = false, showOnlyComp
                       <span className="text-lg font-bold text-[#5e3b00]">+{task.score}</span>
                     </div>
                     <p className="text-sm text-[#917800] line-clamp-2 mb-2">
-                      {task.explanation}
+                      {normalizeExplanation(task.explanation)}
                     </p>
                     <p className="text-xs text-[#454545]">
                       Added: {new Date(task.created_at).toLocaleDateString()}

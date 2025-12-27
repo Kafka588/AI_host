@@ -67,7 +67,7 @@ function Board({
                   <div className="text-[#dcdcdc]">{item.name}</div>
                 </div>
               </div>
-              <div className="text-xl font-bold text-[#FFD700]">{item.score}</div>
+              {/* <div className="text-xl font-bold text-[#FFD700]">{item.score}</div> */}
             </div>
           ))}
           {hasMore && (

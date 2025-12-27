@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { TaskForm } from "@/components/TaskForm";
+import { EditTaskForm } from "@/components/EditTaskForm";
 import { TaskList } from "@/components/TaskList";
 import { useState, useEffect } from "react";
 
@@ -34,6 +35,8 @@ export default function ChallengesPage() {
   const [taskRefresh, setTaskRefresh] = useState(0);
   const [addTaskOpen, setAddTaskOpen] = useState(false);
   const [viewTasksOpen, setViewTasksOpen] = useState(false);
+  const [editTaskOpen, setEditTaskOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
@@ -201,6 +204,17 @@ export default function ChallengesPage() {
                       </Badge>
                     </div>
                     <div className="flex gap-2 mb-3">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-blue-600 text-blue-400"
+                        onClick={() => {
+                          setEditingTask(task);
+                          setEditTaskOpen(true);
+                        }}
+                      >
+                        ✏️ Edit
+                      </Button>
                       <Button
                         size="sm"
                         variant="outline"
@@ -398,6 +412,24 @@ export default function ChallengesPage() {
             ) : (
               <img src={selectedImage} alt="Proof" className="w-full h-auto rounded" />
             )
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={editTaskOpen} onOpenChange={setEditTaskOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Task</DialogTitle>
+          </DialogHeader>
+          {editingTask && (
+            <EditTaskForm 
+              task={editingTask}
+              onTaskUpdated={() => {
+                setEditTaskOpen(false);
+                setEditingTask(null);
+                fetchTasks();
+              }}
+            />
           )}
         </DialogContent>
       </Dialog>

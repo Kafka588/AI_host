@@ -196,8 +196,14 @@ export async function POST(request: Request) {
     });
 
     if (!voteResponse.ok) {
-      const errorData = await voteResponse.json();
-      throw new Error(errorData.message || "Failed to submit vote");
+      let errorData: any = null;
+      try {
+        errorData = await voteResponse.json();
+      } catch (parseErr) {
+        // ignore parse errors; fallback to text
+      }
+      const message = errorData?.message || errorData?.error || "Failed to submit vote";
+      return NextResponse.json({ error: message, details: errorData }, { status: voteResponse.status || 400 });
     }
 
     const vote = await voteResponse.json();
@@ -206,7 +212,7 @@ export async function POST(request: Request) {
   } catch (error: any) {
     console.error("Error submitting vote:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to submit vote" },
+      { error: error?.message || "Failed to submit vote" },
       { status: 500 }
     );
   }
