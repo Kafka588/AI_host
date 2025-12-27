@@ -75,8 +75,8 @@ export function TaskSubmitDialog({ open, onOpenChange, taskId, taskTitle, onSucc
   };
 
   const handleSubmit = async () => {
-    if (!proofImage || !user) {
-      setError("Please upload proof image");
+    if (!user) {
+      setError("User not authenticated");
       return;
     }
 
@@ -125,7 +125,7 @@ export function TaskSubmitDialog({ open, onOpenChange, taskId, taskTitle, onSucc
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <Label>Upload Proof (Image or Video)</Label>
+            <Label>Upload Proof (Image or Video) - Optional</Label>
             <Input
               type="file"
               accept="image/*,video/*"
@@ -133,7 +133,7 @@ export function TaskSubmitDialog({ open, onOpenChange, taskId, taskTitle, onSucc
               disabled={uploading}
               className="mt-2"
             />
-            <p className="text-xs text-gray-400 mt-1 break-words">Supported: Images (JPG, PNG) and Videos (MP4, MOV, WebM)</p>
+            <p className="text-xs text-gray-400 mt-1 break-words">Supported: Images (JPG, PNG) and Videos (MP4, MOV, WebM). Leave empty if not required.</p>
           </div>
 
           {proofImage && (
@@ -163,10 +163,10 @@ export function TaskSubmitDialog({ open, onOpenChange, taskId, taskTitle, onSucc
           <div className="flex flex-col sm:flex-row gap-2">
             <Button
               onClick={handleSubmit}
-              disabled={uploading || !proofImage}
+              disabled={uploading}
               className="flex-1 bg-green-600 hover:bg-green-700"
             >
-              {uploading ? "Submitting..." : "Submit Proof"}
+              {uploading ? "Submitting..." : "Submit"}
             </Button>
             <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>
               Cancel

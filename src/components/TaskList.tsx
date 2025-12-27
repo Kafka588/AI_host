@@ -24,14 +24,8 @@ type TaskListProps = {
 export function TaskList({ refreshTrigger, showOnlyScanned = false, showOnlyCompleted = false, showQRCodes = false }: TaskListProps) {
   const { user } = useAuth();
   const normalizeExplanation = (text: string) => {
-    if (!text) return "";
-    const trimmed = text.trim();
-    const looksLikeCode = /objects|annotate|order_by|select|from|Count\(/i.test(trimmed);
-    const parts = trimmed.split("/").map((p) => p.trim()).filter(Boolean);
-    if (looksLikeCode && parts.length > 1) {
-      return parts[parts.length - 1];
-    }
-    return trimmed;
+    // Return text as-is without cleaning
+    return text;
   };
   const [tasks, setTasks] = useState<Task[]>([]);
   const [scannedTaskIds, setScannedTaskIds] = useState<string[]>([]);

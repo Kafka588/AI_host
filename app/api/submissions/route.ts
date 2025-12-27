@@ -83,6 +83,25 @@ export async function POST(req: Request) {
         return Response.json({ error: "Submission ID and status required" }, { status: 400 });
       }
 
+      // Get the submission to find the task_id
+      const { data: submission, error: fetchError } = await supabase
+        .from("submissions")
+        .select("task_id")
+        .eq("id", id)
+        .single();
+
+      if (fetchError) return Response.json({ error: fetchError.message }, { status: 400 });
+
+      // If approving, reject all other submissions for this task
+      if (status === "approved" && submission?.task_id) {
+        await supabase
+          .from("submissions")
+          .update({ status: "rejected", updated_at: new Date().toISOString() })
+          .eq("task_id", submission.task_id)
+          .neq("id", id)
+          .in("status", ["pending"]);
+      }
+
       const { data, error } = await supabase
         .from("submissions")
         .update({ status, updated_at: new Date().toISOString() })
