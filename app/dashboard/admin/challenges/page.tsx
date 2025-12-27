@@ -18,6 +18,7 @@ type Submission = {
   task_id: string;
   task_title: string;
   proof_image: string;
+  proof_text?: string | null;
   status: "pending" | "approved" | "rejected";
   created_at: string;
 };
@@ -43,6 +44,8 @@ export default function ChallengesPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [imageViewOpen, setImageViewOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string>("");
+  const [selectedText, setSelectedText] = useState<string | null>(null);
+  const [selectedExplanation, setSelectedExplanation] = useState<string>("");
 
   const fetchSubmissions = async () => {
     const isRefreshing = refreshing;
@@ -112,8 +115,10 @@ export default function ChallengesPage() {
     }
   };
 
-  const handleViewProof = (proof: string) => {
+  const handleViewProof = (proof: string, text?: string | null, explanation?: string) => {
     setSelectedImage(proof);
+    setSelectedText(text || null);
+    setSelectedExplanation(explanation || "");
     setImageViewOpen(true);
   };
 
@@ -318,7 +323,10 @@ export default function ChallengesPage() {
                           <Button
                             size="sm"
                             variant="link"
-                            onClick={() => handleViewProof(submission.proof_image)}
+                            onClick={() => {
+                              const task = tasks.find((t) => t.id === submission.task_id);
+                              handleViewProof(submission.proof_image, submission.proof_text, task?.explanation);
+                            }}
                             className="text-blue-400 p-0"
                           >
                             View
@@ -379,7 +387,7 @@ export default function ChallengesPage() {
 
       {/* Media Viewer Modal */}
       <Dialog open={imageViewOpen} onOpenChange={setImageViewOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <div className="flex items-center justify-between">
               <DialogTitle>View Proof</DialogTitle>
@@ -399,20 +407,34 @@ export default function ChallengesPage() {
               )}
             </div>
           </DialogHeader>
-          {selectedImage && (
-            selectedImage.match(/\.(mp4|mov|webm|avi)$/i) || selectedImage.includes('video/') ? (
-              <video 
-                src={selectedImage} 
-                controls 
-                className="w-full h-auto rounded"
-                preload="metadata"
-              >
-                Your browser does not support video playback.
-              </video>
-            ) : (
-              <img src={selectedImage} alt="Proof" className="w-full h-auto rounded" />
-            )
-          )}
+          <div className="space-y-4">
+            {selectedExplanation && (
+              <div className="bg-slate-700 p-4 rounded border border-slate-600">
+                <h3 className="text-sm font-semibold text-gray-300 mb-2">Task Explanation</h3>
+                <p className="text-sm text-gray-300 whitespace-pre-wrap break-words">{selectedExplanation}</p>
+              </div>
+            )}
+            {selectedImage && (
+              selectedImage.match(/\.(mp4|mov|webm|avi)$/i) || selectedImage.includes('video/') ? (
+                <video 
+                  src={selectedImage} 
+                  controls 
+                  className="w-full h-auto rounded"
+                  preload="metadata"
+                >
+                  Your browser does not support video playback.
+                </video>
+              ) : (
+                <img src={selectedImage} alt="Proof" className="w-full h-auto rounded" />
+              )
+            )}
+            {selectedText && (
+              <div className="bg-slate-700 p-4 rounded border border-slate-600">
+                <h3 className="text-sm font-semibold text-gray-300 mb-2">Comments</h3>
+                <p className="text-sm text-gray-300 whitespace-pre-wrap break-words">{selectedText}</p>
+              </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
 

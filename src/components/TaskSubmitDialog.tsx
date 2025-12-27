@@ -19,6 +19,7 @@ export function TaskSubmitDialog({ open, onOpenChange, taskId, taskTitle, onSucc
   const { user } = useAuth();
   const [proofImage, setProofImage] = useState<string | null>(null);
   const [proofType, setProofType] = useState<"image" | "video" | null>(null);
+  const [proofText, setProofText] = useState<string>("");
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
 
@@ -90,6 +91,7 @@ export function TaskSubmitDialog({ open, onOpenChange, taskId, taskTitle, onSucc
         taskId,
         taskTitle,
         proofImage,
+        proofText: proofText || null,
       };
 
       console.log("Submitting:", payload);
@@ -108,6 +110,7 @@ export function TaskSubmitDialog({ open, onOpenChange, taskId, taskTitle, onSucc
         onOpenChange(false);
         setProofImage(null);
         setProofType(null);
+        setProofText("");
       } else {
         setError(data.error || "Failed to submit");
       }
@@ -153,6 +156,16 @@ export function TaskSubmitDialog({ open, onOpenChange, taskId, taskTitle, onSucc
               )}
             </div>
           )}
+
+          <div>
+            <Label>Comments (Optional)</Label>
+            <textarea
+              value={proofText}
+              onChange={(e) => setProofText(e.target.value)}
+              placeholder="Add any notes or explanation here..."
+              className="w-full h-24 mt-2 p-2 bg-slate-700 text-white rounded border border-slate-600 focus:border-slate-500 focus:outline-none resize-none"
+            />
+          </div>
 
           {error && (
             <div className="text-sm text-red-600 bg-red-50 p-3 rounded break-words">
